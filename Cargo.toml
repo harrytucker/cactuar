@@ -1,0 +1,33 @@
+[package]
+name = "cactuar"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# async runtime
+tokio = { version = "1", features = ["full"] }
+
+# kubernetes dependencies
+kube = { version = "0.75", features = ["runtime", "derive"] }
+k8s-openapi = { version = "0.16", features = ["v1_18"] }
+
+# format utilities
+serde = "1"
+serde_json = "1"
+serde_yaml = "0.9"
+schemars = "0.8"
+
+# human-readable duration handling
+duration-str = "0.4"
+
+# logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter", "json"] }
+console-subscriber = { version = "0.1", features = ["parking_lot"] }
+tracing-log = "0.1"
+tracing-error = "0.2"
+
+# error spans
+color-eyre = "0.6"
