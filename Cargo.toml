@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 # async runtime
 tokio = { version = "1", features = ["full"] }
+futures = "*" # use the futures version pulled in by tokio
 
 # kubernetes dependencies
 kube = { version = "0.75", features = ["runtime", "derive"] }

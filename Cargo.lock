@@ -214,6 +214,7 @@ dependencies = [
  "color-eyre",
  "console-subscriber",
  "duration-str",
+ "futures",
  "k8s-openapi",
  "kube",
  "schemars",

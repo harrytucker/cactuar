@@ -28,8 +28,9 @@
 //! - Cargo Makefile
 //! - Project architecture
 
-pub mod logging;
-pub mod service_alerts;
+mod logging;
+mod service_alerts;
+mod watcher;
 
 use color_eyre::Result;
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
@@ -61,17 +62,21 @@ async fn main() -> Result<()> {
 
     tracing::info!("Discovering existing ServiceAlerts in cluster.");
     let lp = ListParams::default();
-    service_alerters
-        .list(&lp)
-        .await?
-        .iter()
-        .for_each(|service_alert| {
-            tracing::info!(
-                service_alert.metadata.name,
-                service_alert.metadata.namespace,
-                "Discovered ServiceAlert!"
-            )
-        });
+    let discover_alerters = match service_alerters.list(&lp).await {
+        Ok(alerters) => alerters,
+        Err(error) => {
+            tracing::error!(%error, "ServiceAlert discovery failed.");
+            return Err(error.into());
+        }
+    };
+
+    discover_alerters.iter().for_each(|service_alert| {
+        tracing::info!(
+            service_alert.metadata.name,
+            service_alert.metadata.namespace,
+            "Discovered ServiceAlert!"
+        )
+    });
 
     tracing::info!("Patching ServiceAlert CustomResourceDefinition.");
     custom_resources
@@ -85,6 +90,6 @@ async fn main() -> Result<()> {
     // TODO: How to handle CRD deployment?
 
     // TODO: Launch reconciler in background
-
+    tokio::spawn(watcher::watch_for_events(service_alerters)).await??;
     Ok(())
 }
