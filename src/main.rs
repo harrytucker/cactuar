@@ -66,6 +66,7 @@ async fn main() -> Result<()> {
         Ok(alerters) => alerters,
         Err(error) => {
             tracing::error!(%error, "ServiceAlert discovery failed.");
+            explain_kube_err(&error);
             return Err(error.into());
         }
     };
@@ -92,4 +93,24 @@ async fn main() -> Result<()> {
     // TODO: Launch reconciler in background
     tokio::spawn(watcher::watch_for_events(service_alerters)).await??;
     Ok(())
+}
+
+fn explain_kube_err(err: &kube::Error) {
+    match err {
+        kube::Error::Api(_) => todo!(),
+        kube::Error::HyperError(_) => {
+            tracing::info!("Transport issue detected, am I running in a Kubernetes cluster?")
+        }
+        kube::Error::Service(_) => todo!(),
+        kube::Error::FromUtf8(_) => todo!(),
+        kube::Error::LinesCodecMaxLineLengthExceeded => todo!(),
+        kube::Error::ReadEvents(_) => todo!(),
+        kube::Error::HttpError(_) => todo!(),
+        kube::Error::SerdeError(_) => todo!(),
+        kube::Error::BuildRequest(_) => todo!(),
+        kube::Error::InferConfig(_) => todo!(),
+        kube::Error::Discovery(_) => todo!(),
+        kube::Error::OpensslTls(_) => todo!(),
+        kube::Error::Auth(_) => tracing::info!("Failed to authenticate with the Kubernetes API."),
+    }
 }

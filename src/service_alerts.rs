@@ -43,3 +43,27 @@ pub enum Severity {
     Warning,
     Critical,
 }
+
+#[cfg(test)]
+mod test {
+    const SERIALISED_EXAMPLE: &str = r#"
+        apiVersion: cactuar.rs/v1
+        kind: ServiceAlerter
+        metadata:
+          name: fubar-alerter
+        spec:
+          commonLabels:
+            origin: cloud
+            owner: bar
+          serviceSelector:
+            name: fubar-service
+          alerts:
+          - replicasEqualTo:
+              critical: 0
+          - errorsMoreThan:
+              warning: 25
+"#;
+
+    #[test]
+    fn test_serialisation_happy_path() {}
+}

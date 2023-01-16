@@ -32,3 +32,6 @@ tracing-error = "0.2"
 
 # error spans
 color-eyre = "0.6"
+
+[dev-dependencies]
+pretty_assertions = "1.3"
