@@ -4,10 +4,16 @@
 #
 # Install cargo-make to run these tasks:
 #   cargo install cargo-make --force
+# 
+# After installation, to run a task:
+#   cargo make <task>
 
 [config]
 default_to_workspace = false
 skip_core_tasks = true
+
+[env]
+CACTUAR_DOCKER_TARGET = "cactuar"
 
 [tasks.test]
 command = "cargo"
@@ -22,3 +28,14 @@ install_crate = "cargo-llvm-cov"
 [tasks.docs]
 command = "cargo"
 args = ["doc"]
+
+[tasks.docker]
+command = "docker"
+args = [
+    "build",
+    "--tag", # tag and target are currently the same
+    "${CACTUAR_DOCKER_TARGET}",
+    "--target",
+    "${CACTUAR_DOCKER_TARGET}",
+    ".", # build context
+]
