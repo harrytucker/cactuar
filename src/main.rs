@@ -92,6 +92,15 @@ async fn main() -> Result<()> {
     let service_alerters: Api<ServiceAlerter> = Api::all(client.clone());
     let custom_resources: Api<CustomResourceDefinition> = Api::all(client.clone());
 
+    tracing::info!("Patching ServiceAlert CustomResourceDefinition.");
+    custom_resources
+        .patch(
+            CUSTOM_RESOURCE_NAME,
+            &PatchParams::apply(MANAGER_STRING),
+            &Patch::Apply(ServiceAlerter::crd()),
+        )
+        .await?;
+
     tracing::info!("Discovering existing ServiceAlerts in cluster.");
     let lp = ListParams::default();
     let discover_alerters = match service_alerters.list(&lp).await {
