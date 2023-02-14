@@ -58,6 +58,7 @@
 //! - Cargo Makefile
 //! - Project architecture
 
+mod config;
 mod logging;
 mod service_alerts;
 mod watcher;
@@ -81,9 +82,9 @@ const CUSTOM_RESOURCE_NAME: &str = "servicealerters.cactuar.rs";
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // TODO: Configuration support
+    let config = config::get_configuration()?;
 
-    let subscriber = logging::new_subscriber(tracing::Level::INFO)?;
+    let subscriber = logging::new_subscriber(config.log.level)?;
     logging::set_global_logger(subscriber)?;
 
     let client = Client::try_default().await?;
