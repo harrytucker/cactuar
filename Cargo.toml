@@ -1,9 +1,17 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [package]
 name = "cactuar"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "controller"
+path = "src/main.rs"
+
+[[bin]]
+name = "crdgen"
+path = "src/main_crdgen.rs"
 
 [dependencies]
 # async runtime
