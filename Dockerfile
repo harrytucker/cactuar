@@ -21,6 +21,6 @@ FROM gcr.io/distroless/cc AS cactuar
 
 WORKDIR /app
 COPY cactuar.toml cactuar.toml
-COPY --from=builder --chown=root:root /app/target/release/controller /usr/local/bin/
+COPY --from=builder --chown=root:root /app/target/release/controller /
 
-CMD ["controller"]
+CMD ["/controller"]
