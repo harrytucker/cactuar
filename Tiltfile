@@ -19,3 +19,6 @@ docker_build(
 # so if your cluster restricts these permissions you will likely run into
 # issues.
 k8s_yaml(helm("./helm/cactuar"))
+
+# Expose tokio-console port
+k8s_resource("chart-cactuar", port_forwards="6669:6669")
