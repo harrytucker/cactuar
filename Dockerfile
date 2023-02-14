@@ -23,4 +23,6 @@ WORKDIR /app
 COPY cactuar.toml cactuar.toml
 COPY --from=builder --chown=root:root /app/target/release/controller /
 
+# Expose port for tokio-console
+EXPOSE 6669
 CMD ["/controller"]

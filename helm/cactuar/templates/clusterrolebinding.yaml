@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crd-cactuar
+subjects:
+- kind: ServiceAccount
+  name: {{ include "cactuar.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: crd-cactuar
+  apiGroup: rbac.authorization.k8s.io
