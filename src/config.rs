@@ -1,7 +1,4 @@
-use std::{
-    fmt::Debug,
-    net::{IpAddr, SocketAddr},
-};
+use std::fmt::Debug;
 
 use config::{Config, ValueKind};
 use serde::Deserialize;
