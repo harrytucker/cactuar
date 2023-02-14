@@ -1,0 +1,25 @@
+# local-dev is the default name, you can override this if desired
+apiVersion: k3d.io/v1alpha4
+kind: Simple
+metadata:
+    name: local-dev
+
+# Creates a local Docker regsitry (as a Docker container) that our K3S cluster
+# can pull images from.
+#
+# Set your `imagePullPolicy` to `Always` to automatically pull new images
+# during development if you prefer.
+registries: # define how registries should be created or used
+    create: # creates a default registry to be used with the cluster; same as `--registry-create registry.localhost`
+        name: registry.localhost
+        host: "0.0.0.0"
+        hostPort: "64541"
+
+# Disable the default Traefik load balancer, since we're going to use Istio's
+# IngressGateway objects.
+options:
+    k3s: # options passed on to K3s itself
+        extraArgs: # additional arguments passed to the `k3s server|agent` command; same as `--k3s-arg`
+            - arg: --no-deploy=traefik
+              nodeFilters:
+                - server:*
