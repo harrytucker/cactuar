@@ -13,22 +13,12 @@ FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
-# RUN cargo build --release --bin chainsaw-demo-grpc
 RUN cargo build --release
 
-FROM debian:bullseye-slim AS base-runtime
-# Running apt again here to install common certificate authorites on the
-# base-runtime target.
-#
-# The previous install including `cmake` is dropped as this layer is independent
-# of the previous.
-RUN apt-get update
-RUN apt-get install ca-certificates -y
+FROM gcr.io/distroless/cc AS cactuar
 
 WORKDIR /app
 COPY cactuar.toml cactuar.toml
-
-FROM base-runtime AS cactuar
 COPY --from=builder --chown=root:root /app/target/release/controller /usr/local/bin/
 
 CMD ["controller"]
