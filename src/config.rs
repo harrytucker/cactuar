@@ -60,15 +60,17 @@ impl Default for LogLevel {
     }
 }
 
-/// Reads application configuration from either a `config.toml` file, or from
-/// environment variables.
-pub fn get_configuration() -> Result<CactuarConfig, config::ConfigError> {
-    let builder = Config::builder()
-        .add_source(config::Environment::default())
-        .add_source(config::File::with_name("config"))
-        .build()?;
+impl CactuarConfig {
+    /// Reads application configuration from either a `config.toml` file, or from
+    /// environment variables.
+    pub fn new() -> Result<CactuarConfig, config::ConfigError> {
+        let builder = Config::builder()
+            .add_source(config::File::with_name("cactuar").required(false))
+            .add_source(config::Environment::default().separator("_"))
+            .build()?;
 
-    builder.try_deserialize()
+        builder.try_deserialize()
+    }
 }
 
 fn default_serve_address() -> IpAddr {
