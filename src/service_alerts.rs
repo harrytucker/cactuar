@@ -1,9 +1,17 @@
 use std::collections::HashMap;
 
+use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use kube::CustomResource;
+/// Identifier that is recorded by the Kubernetes API for the purpose of
+/// identifying the application responsible for the given Kubernetes resource.
+const MANAGER_STRING: &str = "cactuar";
+
+pub const API_GROUP: &str = "cactuar.rs";
+pub const API_VERSION: &str = "v1alpha1";
+pub const KIND: &str = "ServiceAlerter";
+pub const FINALIZER_NAME: &str = "servicealerter.cactuar.rs";
 
 #[derive(CustomResource, Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -58,10 +66,20 @@ pub enum Severity {
     Critical,
 }
 
+/// The status object of `StatusAlerter`
+#[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ServiceAlerterStatus {
+    // pub reconciled: bool,
+    pub last_reconciled_at: Option<String>,
+    pub reconciliation_expires_at: Option<String>,
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     const SERIALIZED_YAML_SPEC: &str = r#"
 commonLabels:

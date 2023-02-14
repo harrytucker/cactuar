@@ -59,9 +59,9 @@
 //! - Project architecture
 
 mod config;
+mod controller;
 mod logging;
 mod service_alerts;
-mod watcher;
 
 use crate::config::CactuarConfig;
 use crate::service_alerts::ServiceAlerter;
@@ -71,6 +71,7 @@ use kube::{
     api::{ListParams, Patch, PatchParams},
     Api, Client, CustomResourceExt,
 };
+use controller::CactuarController;
 
 /// Identifier that is recorded by the Kubernetes API for the purpose of
 /// identifying the application responsible for the given Kubernetes resource.
@@ -83,6 +84,7 @@ const CUSTOM_RESOURCE_NAME: &str = "servicealerters.cactuar.rs";
 
 #[tokio::main]
 async fn main() -> Result<()> {
+<<<<<<< Updated upstream
     let config = CactuarConfig::new()?;
 
     let subscriber = logging::new_subscriber(config.log.level)?;
@@ -124,6 +126,11 @@ async fn main() -> Result<()> {
 
     // TODO: Launch reconciler in background
     tokio::spawn(watcher::watch_for_events(service_alerters)).await??;
+=======
+    // Start kubernetes controller
+    CactuarController::new().await;
+
+>>>>>>> Stashed changes
     Ok(())
 }
 
