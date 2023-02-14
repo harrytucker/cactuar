@@ -1,0 +1,3 @@
+# rustfmt sometimes fails to pick up the version and defaults to the 2015
+# edition.
+edition = "2021"
