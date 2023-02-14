@@ -9,7 +9,11 @@ spec:
   serviceSelector:
     name: fubar-service
   alerts:
-  - replicasEqualTo:
-      critical: 0
-  - errorsMoreThan:
-      warning: 25
+    - replicas:
+        warning:
+          lessThan: 3
+        critical:
+          lessThan: 1
+    - requestErrorPercent:
+        critical:
+          equalTo: 100

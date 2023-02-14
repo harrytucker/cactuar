@@ -1,0 +1,24 @@
+# ================================================
+# Cactuar
+# ================================================
+#
+# Install cargo-make to run these tasks:
+#   cargo install cargo-make --force
+
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+[tasks.test]
+command = "cargo"
+args = [ "nextest", "run" ]
+install_crate = "cargo-nextest"
+
+[tasks.coverage]
+command = "cargo"
+args = [ "llvm-cov" ]
+install_crate = "cargo-llvm-cov"
+
+[tasks.docs]
+command = "cargo"
+args = ["doc"]
