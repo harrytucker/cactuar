@@ -119,16 +119,6 @@ async fn main() -> Result<()> {
             "Discovered ServiceAlert!"
         )
     });
-
-    tracing::info!("Patching ServiceAlert CustomResourceDefinition.");
-    custom_resources
-        .patch(
-            CUSTOM_RESOURCE_NAME,
-            &PatchParams::apply(MANAGER_STRING),
-            &Patch::Apply(ServiceAlerter::crd()),
-        )
-        .await?;
-
     // TODO: How to handle CRD deployment?
 
     // TODO: Launch reconciler in background
