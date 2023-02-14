@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use kube::CustomResource;
 
-#[derive(CustomResource, Debug, Serialize, Deserialize, Clone, JsonSchema)]
+#[derive(CustomResource, Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[kube(
     group = "cactuar.rs",
@@ -16,25 +16,39 @@ use kube::CustomResource;
 pub struct ServiceAlerterSpec {
     pub common_labels: HashMap<String, String>,
     pub service_selector: ServiceSelector,
+
+    // For reasons to do with `kube` relying on JsonSchema, I cannot use serde's
+    // 'with' attribute here, so you need to manually disambiguate both the
+    // serialisation and deserialisation.
+    //
+    // See: https://github.com/GREsau/schemars/issues/89
+    #[serde(
+        serialize_with = "serde_yaml::with::singleton_map_recursive::serialize",
+        deserialize_with = "serde_yaml::with::singleton_map_recursive::deserialize"
+    )]
     pub alerts: Vec<Alert>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ServiceSelector {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum Alert {
-    ReplicasEqualTo(HashMap<Severity, i32>),
-    ReplicasLessThan(HashMap<Severity, i32>),
-    LatencyP99MoreThan(HashMap<Severity, i32>),
-    LatencyP95MoreThan(HashMap<Severity, i32>),
-    LatencyP50MoreThan(HashMap<Severity, i32>),
-    ErrorsMoreThan(HashMap<Severity, i32>),
-    TrafficMoreThan(HashMap<Severity, i32>),
+    Replicas(SeverityBoundary),
+    RequestErrorPercent(SeverityBoundary),
+}
+
+type SeverityBoundary = HashMap<Severity, Boundary>;
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum Boundary {
+    LessThan(i32),
+    EqualTo(i32),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
@@ -46,24 +60,52 @@ pub enum Severity {
 
 #[cfg(test)]
 mod test {
-    const SERIALISED_EXAMPLE: &str = r#"
-        apiVersion: cactuar.rs/v1
-        kind: ServiceAlerter
-        metadata:
-          name: fubar-alerter
-        spec:
-          commonLabels:
-            origin: cloud
-            owner: bar
-          serviceSelector:
-            name: fubar-service
-          alerts:
-          - replicasEqualTo:
-              critical: 0
-          - errorsMoreThan:
-              warning: 25
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    const SERIALIZED_YAML_SPEC: &str = r#"
+commonLabels:
+  origin: cloud
+  owner: bar
+serviceSelector:
+  name: fubar-service
+alerts:
+- replicas:
+    warning:
+      lessThan: 3
+    critical:
+      lessThan: 1
+- requestErrorPercent:
+    critical:
+      equalTo: 100
 "#;
 
     #[test]
-    fn test_serialisation_happy_path() {}
+    fn test_serialisation_happy_path() -> color_eyre::Result<()> {
+        let rust_repr_alerts: Vec<Alert> = vec![
+            Alert::Replicas(SeverityBoundary::from([
+                (Severity::Warning, Boundary::LessThan(3)),
+                (Severity::Critical, Boundary::LessThan(1)),
+            ])),
+            Alert::RequestErrorPercent(SeverityBoundary::from([(
+                Severity::Critical,
+                Boundary::EqualTo(100),
+            )])),
+        ];
+        let rust_repr = ServiceAlerterSpec {
+            common_labels: HashMap::from([
+                ("origin".into(), "cloud".into()),
+                ("owner".into(), "bar".into()),
+            ]),
+            service_selector: ServiceSelector {
+                name: "fubar-service".into(),
+            },
+            alerts: rust_repr_alerts,
+        };
+
+        let yaml_repr: ServiceAlerterSpec = serde_yaml::from_str(SERIALIZED_YAML_SPEC)?;
+
+        assert_eq!(yaml_repr, rust_repr);
+        Ok(())
+    }
 }
