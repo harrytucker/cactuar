@@ -59,9 +59,9 @@
 //! - Project architecture
 
 mod config;
+mod controller;
 mod logging;
 mod service_alerts;
-mod watcher;
 
 use crate::config::CactuarConfig;
 use crate::service_alerts::ServiceAlerter;
@@ -71,6 +71,7 @@ use kube::{
     api::{ListParams, Patch, PatchParams},
     Api, Client, CustomResourceExt,
 };
+use controller::CactuarController;
 
 /// Identifier that is recorded by the Kubernetes API for the purpose of
 /// identifying the application responsible for the given Kubernetes resource.
@@ -83,46 +84,9 @@ const CUSTOM_RESOURCE_NAME: &str = "servicealerters.cactuar.rs";
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = CactuarConfig::new()?;
+    // Start kubernetes controller
+    CactuarController::new().await;
 
-    let subscriber = logging::new_subscriber(config.log.level)?;
-    logging::set_global_logger(subscriber)?;
-
-    let client = Client::try_default().await?;
-    let service_alerters: Api<ServiceAlerter> = Api::all(client.clone());
-    let custom_resources: Api<CustomResourceDefinition> = Api::all(client.clone());
-
-    tracing::info!("Patching ServiceAlert CustomResourceDefinition.");
-    custom_resources
-        .patch(
-            CUSTOM_RESOURCE_NAME,
-            &PatchParams::apply(MANAGER_STRING),
-            &Patch::Apply(ServiceAlerter::crd()),
-        )
-        .await?;
-
-    tracing::info!("Discovering existing ServiceAlerts in cluster.");
-    let lp = ListParams::default();
-    let discover_alerters = match service_alerters.list(&lp).await {
-        Ok(alerters) => alerters,
-        Err(error) => {
-            tracing::error!(%error, "ServiceAlert discovery failed.");
-            explain_kube_err(&error);
-            return Err(error.into());
-        }
-    };
-
-    discover_alerters.iter().for_each(|service_alert| {
-        tracing::info!(
-            service_alert.metadata.name,
-            service_alert.metadata.namespace,
-            "Discovered ServiceAlert!"
-        )
-    });
-    // TODO: How to handle CRD deployment?
-
-    // TODO: Launch reconciler in background
-    tokio::spawn(watcher::watch_for_events(service_alerters)).await??;
     Ok(())
 }
 
