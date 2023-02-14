@@ -31,5 +31,4 @@ COPY cactuar.toml cactuar.toml
 FROM base-runtime AS cactuar
 COPY --from=builder --chown=root:root /app/target/release/controller /usr/local/bin/
 
-EXPOSE 3000
 CMD ["controller"]
