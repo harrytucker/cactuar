@@ -16,8 +16,6 @@ const RUNTIME_CONSOLE_FILTERS: &str = "runtime=trace";
 /// To set this as the global logger, as well as to receive events from the
 /// standard library log facade, call [`set_global_logger`].
 pub fn new_subscriber<L: Into<Level>>(log_level: L) -> Result<impl Subscriber + Send + Sync> {
-    // Filters tracing events based on the RUST_LOG environment variable, or
-    // `env_filter` if RUST_LOG is not set.
     let log_level = log_level.into();
     let env_filter = EnvFilter::from(log_level.as_str())
         .add_directive(TOKIO_CONSOLE_FILTERS.parse()?)
