@@ -34,7 +34,7 @@ command = "docker"
 args = [
     "build",
     "--tag", # tag and target are currently the same
-    "${CACTUAR_DOCKER_TARGET}",
+    "${CACTUAR_DOCKER_TARGET}:${CARGO_MAKE_GIT_HEAD_LAST_COMMIT_HASH_PREFIX}",
     "--target",
     "${CACTUAR_DOCKER_TARGET}",
     ".", # build context
