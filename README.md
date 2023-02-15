@@ -1,5 +1,7 @@
 # Cactuar
 
+[![Rust](https://github.com/harrytucker/cactuar/actions/workflows/rust.yml/badge.svg)](https://github.com/harrytucker/cactuar/actions/workflows/rust.yml)
+
 ![Wanted!!](https://static.wikia.nocookie.net/finalfantasy/images/6/6e/Cactuar_FFVIII_Color_Art.jpg/revision/latest?cb=20130315023650)
 
 _**"Becoming a fine cactus, protecting the desert- those who forsake this duty flee there."**_
