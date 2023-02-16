@@ -48,7 +48,7 @@
 //! emitted by an Istio sidecar container.
 //!
 //! # TODO
-//! - Implement transformation from CRD (ServiceAlerter) spec into Prometheus
+//! - Implement transformation from CRD (ServiceAlerts) spec into Prometheus
 //!   alert rules
 //! - Implement reconciler to ensure consistent state between deployed CRDs and
 //!   Prometheus alerting rules
