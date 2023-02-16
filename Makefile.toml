@@ -29,6 +29,10 @@ install_crate = "cargo-llvm-cov"
 command = "cargo"
 args = ["doc"]
 
+[tasks.lint]
+command = "cargo"
+args = ["clippy"]
+
 [tasks.docker]
 command = "docker"
 args = [

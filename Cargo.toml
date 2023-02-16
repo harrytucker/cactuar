@@ -15,7 +15,7 @@ path = "src/main_crdgen.rs"
 
 [dependencies]
 # async runtime
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.25", features = ["full"] }
 futures = "*" # use the futures version pulled in by tokio
 
 # kubernetes dependencies
@@ -43,14 +43,13 @@ tracing-error = "0.2"
 color-eyre = "0.6"
 chrono = "0.4.23"
 thiserror = "1.0.38"
-config = "0.13.3"
+
+# configuration
+config = "0.13"
 
 [dependencies.uuid]
 version = "1.3.0"
 features = ["v4", "fast-rng", "macro-diagnostics"]
-
-# configuration
-config = "0.13"
 
 [dev-dependencies]
 pretty_assertions = "1.3"
