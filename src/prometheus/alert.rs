@@ -17,6 +17,8 @@ pub struct AlertGroup {
 pub struct AlertRules {
     pub alert: String,
     pub expr: String,
+    #[serde(rename = "for")]
+    pub for_: String,
     pub labels: HashMap<String, String>,
     pub annotations: HashMap<String, String>,
 }
@@ -29,48 +31,27 @@ mod test {
 
     const SERIALIZED_PROM_ALERT: &str = r#"
 groups:
-  - name: foo-monitoring.rules
-    rules:
-      - alert : bar-alert
-        expr: |
-          some_foo
-          > 5
-        labels:
-          severity: warning
-          source: cloud
-          owner: foo
-        annotations:
-          SUMMARY: >-
-            Bar is returning error or unknown responses to Foo
-          DESCRIPTION: >-
-            Alerts when bad things happen.
-          EMAIL_TO: email@mail.com
-"#;
+- name: example
+  rules:
+  - alert: HighRequestLatency
+    expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5
+    for: 10m
+    labels:
+      severity: page
+    annotations:
+      summary: High request latency"#;
 
     #[test]
     fn test_serialisation_happy_path() -> color_eyre::Result<()> {
         let rust_repr = Alerts {
             groups: vec![AlertGroup {
-                name: "foo-monitoring.rules".into(),
+                name: "example".into(),
                 rules: vec![AlertRules {
-                    alert: "bar-alert".into(),
-                    expr: "some_foo\n> 5\n".into(),
-                    labels: HashMap::from([
-                        ("severity".into(), "warning".into()),
-                        ("source".into(), "cloud".into()),
-                        ("owner".into(), "foo".into()),
-                    ]),
-                    annotations: HashMap::from([
-                        (
-                            "SUMMARY".into(),
-                            "Bar is returning error or unknown responses to Foo".into(),
-                        ),
-                        (
-                            "DESCRIPTION".into(),
-                            "Alerts when bad things happen.".into(),
-                        ),
-                        ("EMAIL_TO".into(), "email@mail.com".into()),
-                    ]),
+                    alert: "HighRequestLatency".into(),
+                    expr: r#"job:request_latency_seconds:mean5m{job="myjob"} > 0.5"#.into(),
+                    for_: "10m".into(),
+                    labels: HashMap::from([("severity".into(), "page".into())]),
+                    annotations: HashMap::from([("summary".into(), "High request latency".into())]),
                 }],
             }],
         };
