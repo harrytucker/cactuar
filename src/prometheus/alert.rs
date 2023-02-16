@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
+use color_eyre::{eyre::eyre, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -45,8 +46,27 @@ pub struct Annotations {
     pub email_to: String,
 }
 
+impl TryFrom<Alerts> for BTreeMap<String, String> {
+    type Error = color_eyre::Report;
+
+    fn try_from(value: Alerts) -> Result<Self, Self::Error> {
+        let identifier = match value.groups.first() {
+            Some(group) => match group.rules.first() {
+                Some(rule) => rule.annotations.email_to.clone(),
+                None => return Err(eyre!("No rules defined in alert group.")),
+            },
+            None => return Err(eyre!("No alert rule groups defined.")),
+        };
+
+        let yaml_string = serde_yaml::to_string(&value)?;
+
+        Ok(BTreeMap::from([(identifier, yaml_string)]))
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use color_eyre::Result;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -68,7 +88,7 @@ groups:
       email_to: mail@mail.com"#;
 
     #[test]
-    fn test_serialisation_happy_path() -> color_eyre::Result<()> {
+    fn test_serialisation_happy_path() -> Result<()> {
         let rust_repr = Alerts {
             groups: vec![AlertGroup {
                 name: "example".into(),
