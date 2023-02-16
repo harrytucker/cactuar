@@ -28,15 +28,6 @@ pub struct ServiceAlerterSpec {
     pub alerts: HashMap<Alerts, Vec<AlertConfig>>,
 }
 
-// #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
-// #[serde(rename_all = "camelCase")]
-// pub struct Alerts {
-//     replica_count: Option<Vec<AlertConfig>>,
-//     error_percent: Option<Vec<AlertConfig>>,
-//     traffic_per_second: Option<Vec<AlertConfig>>,
-//     latency_histogram_milliseconds: Option<Vec<AlertConfigHistogram>>,
-// }
-
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum Alerts {
@@ -61,13 +52,10 @@ pub struct AlertConfig {
 
 // Kubernetes enums start with an upper case letter
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub enum Operation {
-    #[serde(rename = "EqualTo")]
     EqualTo,
-    #[serde(rename = "LessThan")]
     LessThan,
-    #[serde(rename = "MoreThan")]
     MoreThan,
 }
 
