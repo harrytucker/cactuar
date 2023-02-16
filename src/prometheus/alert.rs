@@ -56,9 +56,9 @@ groups:
             }],
         };
 
-        // assert_eq!("", serde_yaml::to_string(&rust_repr)?);
         let yaml_repr: Alerts = serde_yaml::from_str(SERIALIZED_PROM_ALERT)?;
         assert_eq!(yaml_repr, rust_repr);
+
         Ok(())
     }
 }
