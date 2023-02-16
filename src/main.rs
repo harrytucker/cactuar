@@ -61,11 +61,13 @@
 mod config;
 mod controller;
 mod logging;
+mod prometheus;
 mod service_alerts;
 
 use crate::config::CactuarConfig;
 use color_eyre::Result;
 use controller::CactuarController;
+use tokio::signal;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -75,8 +77,14 @@ async fn main() -> Result<()> {
     logging::set_global_logger(subscriber)?;
 
     // Start kubernetes controller
-    CactuarController::new().await;
+    let (_, control_future) = CactuarController::new().await;
+    tokio::task::Builder::new()
+        .name("Controller Future")
+        .spawn(control_future)?;
 
+    tracing::info!("Cactuar is now watching!");
+
+    signal::ctrl_c().await?;
     Ok(())
 }
 
