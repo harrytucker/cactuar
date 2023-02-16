@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
+// use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -11,18 +12,18 @@ const MANAGER_STRING: &str = "cactuar";
 
 pub const API_GROUP: &str = "cactuar.rs";
 pub const API_VERSION: &str = "v1alpha1";
-pub const KIND: &str = "ServiceAlerts";
-pub const FINALIZER_NAME: &str = "servicealerter.cactuar.rs";
+pub const KIND: &str = "ServiceAlert";
+pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
 
 #[derive(CustomResource, Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 #[kube(
     group = "cactuar.rs",
     version = "v1",
-    kind = "ServiceAlerts",
+    kind = "ServiceAlert",
     namespaced
 )]
-pub struct ServiceAlertsSpec {
+pub struct ServiceAlertSpec {
     pub common_labels: HashMap<String, String>,
     pub deployment_name: String,
     pub alerts: HashMap<Alerts, Vec<AlertConfig>>,
@@ -69,7 +70,7 @@ pub enum Severity {
 /// The status object of `StatusAlerter`
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceAlertsStatus {
+pub struct ServiceAlertStatus {
     pub last_reconciled_at: Option<String>,
     pub reconciliation_expires_at: Option<String>,
 }
@@ -118,7 +119,7 @@ alerts:
 
     #[test]
     fn test_serialisation_happy_path() -> color_eyre::Result<()> {
-        let rust_repr = ServiceAlertsSpec {
+        let rust_repr = ServiceAlertSpec {
             common_labels: HashMap::from([
                 ("origin".into(), "cloud".into()),
                 ("owner".into(), "bar".into()),
@@ -186,7 +187,7 @@ alerts:
             ]),
         };
 
-        let yaml_repr: ServiceAlertsSpec = serde_yaml::from_str(SERIALIZED_YAML_SPEC)?;
+        let yaml_repr: ServiceAlertSpec = serde_yaml::from_str(SERIALIZED_YAML_SPEC)?;
         assert_eq!(yaml_repr, rust_repr);
         Ok(())
     }
