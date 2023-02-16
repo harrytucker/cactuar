@@ -62,6 +62,7 @@ pub struct AlertConfigHistogram {
     alert_with_labels: HashMap<String, String>,
 }
 
+// Kubernetes enums start with an upper case letter
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum Operation {
