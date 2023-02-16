@@ -66,12 +66,12 @@ mod service_alerts;
 use crate::config::CactuarConfig;
 use crate::service_alerts::ServiceAlerter;
 use color_eyre::Result;
+use controller::CactuarController;
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 use kube::{
     api::{ListParams, Patch, PatchParams},
     Api, Client, CustomResourceExt,
 };
-use controller::CactuarController;
 
 /// Identifier that is recorded by the Kubernetes API for the purpose of
 /// identifying the application responsible for the given Kubernetes resource.
