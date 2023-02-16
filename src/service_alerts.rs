@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::hash::Hash;
 
 use kube::CustomResource;
 use schemars::JsonSchema;
@@ -23,40 +24,39 @@ pub const FINALIZER_NAME: &str = "servicealerter.cactuar.rs";
 )]
 pub struct ServiceAlerterSpec {
     pub common_labels: HashMap<String, String>,
-    pub service_selector: ServiceSelector,
+    pub deployment_name: String,
+    pub alerts: HashMap<Alerts, Vec<AlertConfig>>,
+}
 
-    // For reasons to do with `kube` relying on JsonSchema, I cannot use serde's
-    // 'with' attribute here, so you need to manually disambiguate both the
-    // serialisation and deserialisation.
-    //
-    // See: https://github.com/GREsau/schemars/issues/89
-    #[serde(
-        serialize_with = "serde_yaml::with::singleton_map_recursive::serialize",
-        deserialize_with = "serde_yaml::with::singleton_map_recursive::deserialize"
-    )]
-    pub alerts: Vec<Alert>,
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum Alerts {
+    ReplicaCount,
+    ErrorPercent,
+    TrafficPerSecond,
+    LatencyMillisecondsP50,
+    LatencyMillisecondsP90,
+    LatencyMillisecondsP95,
+    LatencyMillisecondsP99,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceSelector {
-    pub name: String,
+pub struct AlertConfig {
+    operation: Operation,
+    value: f32,
+    #[serde(rename = "for")]
+    for_: String, // want to be able to specify like 3m 4s
+    alert_with_labels: HashMap<String, String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum Alert {
-    Replicas(SeverityBoundary),
-    RequestErrorPercent(SeverityBoundary),
-}
-
-type SeverityBoundary = HashMap<Severity, Boundary>;
-
+// Kubernetes enums start with an upper case letter
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
-#[serde(rename_all = "camelCase")]
-pub enum Boundary {
-    LessThan(i32),
-    EqualTo(i32),
+#[serde(rename_all = "PascalCase")]
+pub enum Operation {
+    EqualTo,
+    LessThan,
+    MoreThan,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
@@ -70,7 +70,6 @@ pub enum Severity {
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ServiceAlerterStatus {
-    // pub reconciled: bool,
     pub last_reconciled_at: Option<String>,
     pub reconciliation_expires_at: Option<String>,
 }
@@ -85,44 +84,109 @@ mod test {
 commonLabels:
   origin: cloud
   owner: bar
-serviceSelector:
-  name: fubar-service
+deploymentName: best-service-eu
 alerts:
-- replicas:
-    warning:
-      lessThan: 3
-    critical:
-      lessThan: 1
-- requestErrorPercent:
-    critical:
-      equalTo: 100
+  replicaCount:
+  - operation: LessThan
+    value: 3
+    for: 3m
+    alertWithLabels:
+      severity: warning
+  - operation: EqualTo
+    value: 0
+    for: 0m
+    alertWithLabels:
+      severity: critical
+  latencyMillisecondsP99:
+  - operation: MoreThan
+    value: 20
+    for: 5m
+    alertWithLabels:
+      severity: warning
+  - operation: MoreThan
+    value: 50
+    for: 2m
+    alertWithLabels:
+      severity: critical
+  latencyMillisecondsP50:
+  - operation: MoreThan
+    value: 20
+    for: 0m
+    alertWithLabels:
+      severity: critical
 "#;
 
     #[test]
     fn test_serialisation_happy_path() -> color_eyre::Result<()> {
-        let rust_repr_alerts: Vec<Alert> = vec![
-            Alert::Replicas(SeverityBoundary::from([
-                (Severity::Warning, Boundary::LessThan(3)),
-                (Severity::Critical, Boundary::LessThan(1)),
-            ])),
-            Alert::RequestErrorPercent(SeverityBoundary::from([(
-                Severity::Critical,
-                Boundary::EqualTo(100),
-            )])),
-        ];
         let rust_repr = ServiceAlerterSpec {
             common_labels: HashMap::from([
                 ("origin".into(), "cloud".into()),
                 ("owner".into(), "bar".into()),
             ]),
-            service_selector: ServiceSelector {
-                name: "fubar-service".into(),
-            },
-            alerts: rust_repr_alerts,
+            deployment_name: String::from("best-service-eu"),
+            alerts: HashMap::from([
+                (
+                    Alerts::ReplicaCount,
+                    vec![
+                        AlertConfig {
+                            operation: Operation::LessThan,
+                            value: 3 as f32,
+                            for_: String::from("3m"),
+                            alert_with_labels: HashMap::from([(
+                                String::from("severity"),
+                                String::from("warning"),
+                            )]),
+                        },
+                        AlertConfig {
+                            operation: Operation::EqualTo,
+                            value: 0 as f32,
+                            for_: String::from("0m"),
+                            alert_with_labels: HashMap::from([(
+                                String::from("severity"),
+                                String::from("critical"),
+                            )]),
+                        },
+                    ],
+                ),
+                (
+                    Alerts::LatencyMillisecondsP99,
+                    vec![
+                        AlertConfig {
+                            operation: Operation::MoreThan,
+                            value: 20 as f32,
+                            for_: String::from("5m"),
+                            alert_with_labels: HashMap::from([(
+                                String::from("severity"),
+                                String::from("warning"),
+                            )]),
+                        },
+                        AlertConfig {
+                            operation: Operation::MoreThan,
+                            value: 50 as f32,
+                            for_: String::from("2m"),
+                            alert_with_labels: HashMap::from([(
+                                String::from("severity"),
+                                String::from("critical"),
+                            )]),
+                        },
+                    ],
+                ),
+                (
+                    Alerts::LatencyMillisecondsP50,
+                    vec![AlertConfig {
+                        operation: Operation::MoreThan,
+                        value: 20 as f32,
+                        for_: String::from("0m"),
+                        alert_with_labels: HashMap::from([(
+                            String::from("severity"),
+                            String::from("critical"),
+                        )]),
+                    }],
+                ),
+            ]),
         };
 
         let yaml_repr: ServiceAlerterSpec = serde_yaml::from_str(SERIALIZED_YAML_SPEC)?;
-
         assert_eq!(yaml_repr, rust_repr);
         Ok(())
     }
