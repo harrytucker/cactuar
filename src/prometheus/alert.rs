@@ -19,8 +19,30 @@ pub struct AlertRules {
     pub expr: String,
     #[serde(rename = "for")]
     pub for_: String,
-    pub labels: HashMap<String, String>,
-    pub annotations: HashMap<String, String>,
+    pub labels: Labels,
+    pub annotations: Annotations,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum PrometheusSeverity {
+    Warning,
+    Critical,
+    Page,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub struct Labels {
+    pub severity: PrometheusSeverity,
+    pub source: String,
+    pub owner: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub struct Annotations {
+    pub summary: String,
+    pub description: String,
+    pub email_to: String,
 }
 
 #[cfg(test)]
@@ -38,8 +60,12 @@ groups:
     for: 10m
     labels:
       severity: page
+      source: cloud
+      owner: service
     annotations:
-      summary: High request latency"#;
+      summary: High request latency
+      description: Request latency over 9000
+      email_to: mail@mail.com"#;
 
     #[test]
     fn test_serialisation_happy_path() -> color_eyre::Result<()> {
@@ -50,8 +76,16 @@ groups:
                     alert: "HighRequestLatency".into(),
                     expr: r#"job:request_latency_seconds:mean5m{job="myjob"} > 0.5"#.into(),
                     for_: "10m".into(),
-                    labels: HashMap::from([("severity".into(), "page".into())]),
-                    annotations: HashMap::from([("summary".into(), "High request latency".into())]),
+                    labels: Labels {
+                        severity: PrometheusSeverity::Page,
+                        source: "cloud".into(),
+                        owner: "service".into(),
+                    },
+                    annotations: Annotations {
+                        summary: "High request latency".into(),
+                        description: "Request latency over 9000".into(),
+                        email_to: "mail@mail.com".into(),
+                    },
                 }],
             }],
         };
