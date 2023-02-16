@@ -1,4 +1,4 @@
- use color_eyre::Result;
+use color_eyre::Result;
 use tracing::{subscriber::set_global_default, Level, Subscriber};
 use tracing_error::ErrorLayer;
 use tracing_log::LogTracer;

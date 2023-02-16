@@ -61,7 +61,7 @@ async fn reconcile(obj: Arc<ServiceAlerts>, ctx: Arc<Context>) -> Result<Action,
 }
 
 fn error_policy(service_alert: Arc<ServiceAlerts>, error: &Error, _ctx: Arc<Context>) -> Action {
-    let requeue_interval = 5*60;
+    let requeue_interval = 5 * 60;
     tracing::info!(
         %error,
         ?service_alert,
@@ -96,7 +96,7 @@ impl ServiceAlerts {
         let _o = docs.patch_status(&name, &ps, &new_status).await?;
 
         // If no events were received, check back every 5 minutes
-        Ok(Action::requeue(Duration::from_secs(5*60)))
+        Ok(Action::requeue(Duration::from_secs(5 * 60)))
     }
 
     // Reconcile with finalize cleanup (the object was deleted)
