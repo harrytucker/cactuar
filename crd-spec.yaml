@@ -1,19 +1,33 @@
 apiVersion: cactuar.rs/v1
 kind: ServiceAlerts
 metadata:
-  name: fubar-alerter
+  name: example-service
 spec:
   commonLabels:
     origin: cloud
     owner: bar
-  serviceSelector:
-    name: fubar-service
+  # This is the name of the deployment to create alerts for.
+  # It accounts for the differing labels between istio and prometheus metrics
+  deploymentName: example-service
   alerts:
-    - replicas:
-        warning:
-          lessThan: 3
-        critical:
-          lessThan: 1
-    - requestErrorPercent:
-        critical:
-          equalTo: 100
+    # I think we should make alerts a map since it forces uniqueness for
+    # the different alert types and forces the warning and critical level alerts
+    # to be together
+    replicaCount:
+      # severity could be its own field
+      - equalTo: 0
+        for: 0m
+        severity: critical
+      # or we could define an extraLabels field and nest it underneath
+      # this would also allow for arbitrary labels
+      - operation: lessThan
+        value: 3
+        for: 3m
+        sendAlertWithLabels:
+          severity: warning
+    latencyMilliseconds:
+      - percentile: 0.99
+        operation: MoreThan
+        value: 20
+        alertWithLabels:
+          severity: critical
