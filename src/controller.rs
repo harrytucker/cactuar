@@ -21,7 +21,7 @@ use tokio::time::Duration;
 use uuid::Uuid;
 
 use crate::service_alerts::{
-    ServiceAlerter, ServiceAlerterStatus, API_GROUP, API_VERSION, FINALIZER_NAME, KIND,
+    ServiceAlerts, ServiceAlertsStatus, API_GROUP, API_VERSION, FINALIZER_NAME, KIND,
 };
 
 #[derive(Error, Debug)]
@@ -39,15 +39,14 @@ struct Context {
     /// Kubernetes client
     client: Client,
     reporter: Reporter,
-    // logger!
 }
 
-async fn reconcile(obj: Arc<ServiceAlerter>, ctx: Arc<Context>) -> Result<Action, Error> {
-    println!("reconcile request: {}", obj.name_any());
+async fn reconcile(obj: Arc<ServiceAlerts>, ctx: Arc<Context>) -> Result<Action, Error> {
+    tracing::info!(object=?obj, "received request");
 
     let client = ctx.client.clone();
     let ns = obj.namespace().unwrap();
-    let docs: Api<ServiceAlerter> = Api::namespaced(client, &ns);
+    let docs: Api<ServiceAlerts> = Api::namespaced(client, &ns);
 
     let action = finalizer(&docs, FINALIZER_NAME, obj, |event| async {
         match event {
@@ -61,22 +60,34 @@ async fn reconcile(obj: Arc<ServiceAlerter>, ctx: Arc<Context>) -> Result<Action
     action
 }
 
-fn error_policy(_doc: Arc<ServiceAlerter>, error: &Error, ctx: Arc<Context>) -> Action {
-    Action::requeue(Duration::from_secs(5 * 60))
+fn error_policy(service_alert: Arc<ServiceAlerts>, error: &Error, _ctx: Arc<Context>) -> Action {
+    let requeue_interval = 5 * 60;
+    tracing::info!(
+        %error,
+        ?service_alert,
+        requeue_interval,
+        "reconciliation failed, re-queueing"
+    );
+    Action::requeue(Duration::from_secs(requeue_interval))
 }
 
-impl ServiceAlerter {
+impl ServiceAlerts {
     // Reconcile (for non-finalizer related changes)
     async fn reconcile(&self, ctx: Arc<Context>) -> Result<Action, kube::Error> {
+        tracing::info!(
+            service_alert=?self,
+            "reconciling request"
+        );
+
         let client = ctx.client.clone();
         let name = self.name_any();
         let ns = self.namespace().unwrap();
-        let docs: Api<ServiceAlerter> = Api::namespaced(client, &ns);
+        let docs: Api<ServiceAlerts> = Api::namespaced(client, &ns);
 
         let new_status = Patch::Apply(json!({
             "apiVersion": format!("{}/{}", API_GROUP, API_VERSION),
             "kind": KIND,
-            "status": ServiceAlerterStatus{
+            "status": ServiceAlertsStatus{
                 last_reconciled_at: Some(Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
                 reconciliation_expires_at: Some((Utc::now() + chrono::Duration::seconds(30)).format("%Y-%m-%dT%H:%M:%S").to_string()),
             }
@@ -85,11 +96,16 @@ impl ServiceAlerter {
         let _o = docs.patch_status(&name, &ps, &new_status).await?;
 
         // If no events were received, check back every 5 minutes
-        Ok(Action::requeue(Duration::from_secs(20)))
+        Ok(Action::requeue(Duration::from_secs(5 * 60)))
     }
 
     // Reconcile with finalize cleanup (the object was deleted)
     async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action, kube::Error> {
+        tracing::info!(
+            service_alert=?self,
+            "deleting resource",
+        );
+
         let recorder = Recorder::new(
             ctx.client.clone(),
             ctx.reporter.clone(),
@@ -99,7 +115,7 @@ impl ServiceAlerter {
         recorder
             .publish(Event {
                 type_: EventType::Normal,
-                reason: "DeleteDoc".into(),
+                reason: "Delete".into(),
                 note: Some(format!("Delete `{}`", self.name_any())),
                 action: "Reconciling".into(),
                 secondary: None,
@@ -113,7 +129,7 @@ impl ServiceAlerter {
 #[derive(Clone)]
 pub struct CactuarController {}
 
-/// Example Controller that owns a Controller for ServiceAlerter
+/// Example Controller that owns a Controller for ServiceAlerts
 impl CactuarController {
     /// Lifecycle initialization interface for app
     ///
@@ -129,7 +145,7 @@ impl CactuarController {
             },
         });
 
-        let service_alerter = Api::<ServiceAlerter>::all(client);
+        let service_alerter = Api::<ServiceAlerts>::all(client);
 
         // Ensure CRD is installed before loop-watching
         let _ = service_alerter
