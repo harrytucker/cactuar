@@ -49,9 +49,6 @@ pub enum Alerts {
     LatencyMillisecondsP99,
 }
 
-// TODO: Add validation for Percentile to be between 0 and 1 non-inclusive
-type Percentile = f32;
-
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct AlertConfig {
