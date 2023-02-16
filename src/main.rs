@@ -61,6 +61,7 @@
 mod config;
 mod controller;
 mod logging;
+mod prometheus;
 mod service_alerts;
 
 use crate::config::CactuarConfig;
