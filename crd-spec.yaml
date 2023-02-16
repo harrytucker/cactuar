@@ -1,5 +1,5 @@
 apiVersion: cactuar.rs/v1
-kind: ServiceAlerter
+kind: ServiceAlerts
 metadata:
   name: fubar-alerter
 spec:

@@ -10,7 +10,7 @@ const MANAGER_STRING: &str = "cactuar";
 
 pub const API_GROUP: &str = "cactuar.rs";
 pub const API_VERSION: &str = "v1alpha1";
-pub const KIND: &str = "ServiceAlerter";
+pub const KIND: &str = "ServiceAlerts";
 pub const FINALIZER_NAME: &str = "servicealerter.cactuar.rs";
 
 #[derive(CustomResource, Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
@@ -18,10 +18,10 @@ pub const FINALIZER_NAME: &str = "servicealerter.cactuar.rs";
 #[kube(
     group = "cactuar.rs",
     version = "v1",
-    kind = "ServiceAlerter",
+    kind = "ServiceAlerts",
     namespaced
 )]
-pub struct ServiceAlerterSpec {
+pub struct ServiceAlertsSpec {
     pub common_labels: HashMap<String, String>,
     pub service_selector: ServiceSelector,
 
@@ -69,7 +69,7 @@ pub enum Severity {
 /// The status object of `StatusAlerter`
 #[derive(Deserialize, Serialize, Clone, Debug, JsonSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceAlerterStatus {
+pub struct ServiceAlertsStatus {
     // pub reconciled: bool,
     pub last_reconciled_at: Option<String>,
     pub reconciliation_expires_at: Option<String>,
@@ -110,7 +110,7 @@ alerts:
                 Boundary::EqualTo(100),
             )])),
         ];
-        let rust_repr = ServiceAlerterSpec {
+        let rust_repr = ServiceAlertsSpec {
             common_labels: HashMap::from([
                 ("origin".into(), "cloud".into()),
                 ("owner".into(), "bar".into()),
@@ -121,7 +121,7 @@ alerts:
             alerts: rust_repr_alerts,
         };
 
-        let yaml_repr: ServiceAlerterSpec = serde_yaml::from_str(SERIALIZED_YAML_SPEC)?;
+        let yaml_repr: ServiceAlertsSpec = serde_yaml::from_str(SERIALIZED_YAML_SPEC)?;
 
         assert_eq!(yaml_repr, rust_repr);
         Ok(())
