@@ -26,7 +26,26 @@ pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
 pub struct ServiceAlertSpec {
     pub common_labels: HashMap<String, String>,
     pub deployment_name: String,
+    pub metric_type: MetricType,
     pub alerts: HashMap<Alerts, Vec<AlertConfig>>,
+}
+
+
+// Since the metrics are different for different protocols, we must map each Alerts enum
+// to a different expression string in prometheus land.
+// e.g.
+// REST + ErrorPercent uses the istio_requests_total         istio standard metric
+// gRPC + ErrorPercent uses the istio_request_messages_total istio standard metric
+// TODO: TCP has no equivalent, so we must handle that at a later date
+// see https://istio.io/latest/docs/reference/config/metrics/ for more information
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
+pub enum MetricType {
+    #[serde(rename = "gRPC")]
+    GRPC,
+    #[serde(rename = "REST")]
+    REST,
+    // #[serde(rename = "TCP")]
+    // TCP,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
