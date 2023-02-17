@@ -48,7 +48,7 @@
 //! emitted by an Istio sidecar container.
 //!
 //! # TODO
-//! - Implement transformation from CRD (ServiceAlerts) spec into Prometheus
+//! - Implement transformation from CRD (ServiceAlert) spec into Prometheus
 //!   alert rules
 //! - Implement reconciler to ensure consistent state between deployed CRDs and
 //!   Prometheus alerting rules
@@ -58,16 +58,18 @@
 //! - Cargo Makefile
 //! - Project architecture
 
+use color_eyre::Result;
+use tokio::signal;
+
+use controller::CactuarController;
+
+use crate::config::CactuarConfig;
+
 mod config;
 mod controller;
 mod logging;
 mod prometheus;
 mod service_alerts;
-
-use crate::config::CactuarConfig;
-use color_eyre::Result;
-use controller::CactuarController;
-use tokio::signal;
 
 #[tokio::main]
 async fn main() -> Result<()> {

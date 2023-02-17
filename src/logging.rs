@@ -1,8 +1,8 @@
 use color_eyre::Result;
-use tracing::{subscriber::set_global_default, Level, Subscriber};
+use tracing::{Level, Subscriber, subscriber::set_global_default};
 use tracing_error::ErrorLayer;
 use tracing_log::LogTracer;
-use tracing_subscriber::{filter::filter_fn, prelude::*, EnvFilter, Layer};
+use tracing_subscriber::{EnvFilter, filter::filter_fn, Layer, prelude::*};
 
 /// Tokio Console requires that the [`tokio`] and `runtime` targets be logged at
 /// the TRACE level. This constant is used to add a directive to [`EnvFilter`]
