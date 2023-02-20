@@ -13,7 +13,7 @@ use prometheus::{Registry, TextEncoder};
 /// # Example
 ///
 /// ```
-/// let metrics_registry = prometheus::Registry::new();
+/// let registry = prometheus::Registry::new();
 /// // register any metrics
 ///
 /// let http_router: axum::Router = axum::Router::new()
