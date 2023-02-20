@@ -8,6 +8,7 @@ use super::{prometheus_handler, readiness_handler};
 const READINESS_CHECK_PATH: &str = "/ready";
 const METRICS_PATH: &str = "/metrics";
 
+/// Produces top level HTTP router that can be exposed by an [`axum::Server`]
 pub fn router() -> Result<axum::Router> {
     let process_collector = ProcessCollector::for_self();
     let prometheus_registry = Registry::new();

@@ -47,9 +47,22 @@
 //! Kubernetes controller for creating Prometheus alerts using standard metrics
 //! emitted by an Istio sidecar container.
 
+/// Configuration management and default config values for Cactuar.
 pub mod config;
+
+/// Logic for monitoring and reconciling of Kubernetes resources.
 pub mod controller;
+
+/// HTTP router and handlers for exposing readiness and Prometheus metrics.
 pub mod http;
+
+/// Configuration of [`tracing`] and [`color_eyre`] to handle structured
+/// logging.
 pub mod logging;
+
+/// Types and logic for representing alerts in their native Prometheus format
+/// and structure.
 pub mod prometheus;
+
+/// Cactuar's representation of service alerts and associated logic.
 pub mod service_alerts;

@@ -1,3 +1,8 @@
+//! # HTTP
+//!
+//! This module contains [`axum`] HTTP handlers, as well as a router that
+//! exposes a readiness check for Kubernetes and Prometheus metrics.
+
 mod metrics;
 mod readiness;
 mod router;
