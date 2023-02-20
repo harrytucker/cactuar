@@ -18,6 +18,7 @@ use prometheus::{Registry, TextEncoder};
 /// let http_router: axum::Router = axum::Router::new()
 ///     .with_state(registry);
 /// ```
+#[tracing::instrument]
 pub async fn prometheus_scrape_handler(
     State(metrics_registry): State<Registry>,
 ) -> Result<String, StatusCode> {
@@ -27,7 +28,10 @@ pub async fn prometheus_scrape_handler(
 
     match encoder.encode_to_string(&metric_families) {
         Ok(metrics) => Ok(metrics),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(err) => {
+            tracing::error!(%err, "Failed to report metrics when scraped!");
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
     }
 }
 
