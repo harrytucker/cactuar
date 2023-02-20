@@ -19,7 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
+
+    - name: Set up Cargo cache
       uses: actions/cache@v3
       with:
         path: |
@@ -29,18 +30,16 @@ jobs:
           ~/.cargo/git/db/
           target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build
       run: cargo build --verbose
+
     - name: Run tests
       run: cargo test --verbose
-  is-crd-up-to-date:
-    needs: build
 
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
     - name: Generate CRD
       run: cargo run --bin crdgen > ./helm/cactuar/templates/crdspec.yaml
+
     - name: Check if up-to-date
       run: |
         if [ -z "$(git status --porcelain)" ]; then \
