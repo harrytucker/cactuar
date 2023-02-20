@@ -64,15 +64,10 @@ use axum::{http::StatusCode, routing};
 use color_eyre::Result;
 use tokio::signal;
 
-use crate::config::CactuarConfig;
-use crate::controller::CactuarController;
-use crate::prometheus::metrics::prometheus_scrape_handler;
-
-mod config;
-mod controller;
-mod logging;
-mod prometheus;
-mod service_alerts;
+use cactuar::{
+    config::CactuarConfig, controller::CactuarController, logging,
+    prometheus::metrics::prometheus_scrape_handler,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
