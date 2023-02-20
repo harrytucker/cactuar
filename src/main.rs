@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
 }
 
 // HTTP router paths:
-const READINESS_CHECK_PATH: &str = "/readiness";
+const READINESS_CHECK_PATH: &str = "/ready";
 const METRICS_PATH: &str = "/metrics";
 
 fn http_router() -> Result<axum::Router> {
