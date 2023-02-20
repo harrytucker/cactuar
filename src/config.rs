@@ -1,4 +1,7 @@
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    net::{IpAddr, SocketAddr},
+};
 
 use config::{Config, ValueKind};
 use serde::Deserialize;
@@ -8,6 +11,8 @@ const DEFAULT_LOG_LEVEL: &str = "info";
 #[derive(Debug, Deserialize)]
 pub struct CactuarConfig {
     pub log: Log,
+
+    pub http: HTTP,
 }
 
 #[derive(Debug, Deserialize)]
@@ -24,6 +29,19 @@ pub enum LogLevel {
     Info,
     Debug,
     Trace,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HTTP {
+    #[serde(default = "default_serve_address")]
+    pub address: IpAddr,
+    pub port: u16,
+}
+
+impl HTTP {
+    pub fn serve_addr(&self) -> SocketAddr {
+        SocketAddr::new(self.address, self.port)
+    }
 }
 
 impl From<LogLevel> for tracing::Level {
@@ -56,4 +74,10 @@ impl CactuarConfig {
 
         builder.try_deserialize()
     }
+}
+
+fn default_serve_address() -> IpAddr {
+    "0.0.0.0"
+        .parse()
+        .expect("failed to parse default grpc address")
 }

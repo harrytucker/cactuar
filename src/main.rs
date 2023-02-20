@@ -58,12 +58,15 @@
 //! - Cargo Makefile
 //! - Project architecture
 
+use ::prometheus::process_collector::ProcessCollector;
+use ::prometheus::Registry;
+use axum::{http::StatusCode, routing};
 use color_eyre::Result;
 use tokio::signal;
 
-use controller::CactuarController;
-
 use crate::config::CactuarConfig;
+use crate::controller::CactuarController;
+use crate::prometheus::metrics::prometheus_scrape_handler;
 
 mod config;
 mod controller;
@@ -81,13 +84,40 @@ async fn main() -> Result<()> {
     // Start kubernetes controller
     let (_, control_future) = CactuarController::new().await;
     tokio::task::Builder::new()
-        .name("Controller Future")
+        .name("K8s Controller")
         .spawn(control_future)?;
 
     tracing::info!("Cactuar is now watching!");
 
+    let serve_addr = config.http.serve_addr();
+    let http_future = axum::Server::bind(&serve_addr).serve(http_router()?.into_make_service());
+    tokio::task::Builder::new()
+        .name("HTTP")
+        .spawn(http_future)?;
+
+    tracing::info!(%serve_addr, "Cactuar now ready to serve requests");
+
     signal::ctrl_c().await?;
     Ok(())
+}
+
+// HTTP router paths:
+const READINESS_CHECK_PATH: &str = "/ready";
+const METRICS_PATH: &str = "/metrics";
+
+fn http_router() -> Result<axum::Router> {
+    let process_collector = ProcessCollector::for_self();
+    let prometheus_registry = Registry::new();
+    prometheus_registry.register(Box::new(process_collector))?;
+
+    Ok(axum::Router::new()
+        .route(READINESS_CHECK_PATH, routing::get(readiness_check))
+        .route(METRICS_PATH, routing::get(prometheus_scrape_handler))
+        .with_state(prometheus_registry))
+}
+
+async fn readiness_check() -> axum::http::StatusCode {
+    StatusCode::NO_CONTENT
 }
 
 // We can come back to this later

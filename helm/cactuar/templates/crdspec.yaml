@@ -1,0 +1,67 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servicealerts.cactuar.rs
+spec:
+  group: cactuar.rs
+  names:
+    categories: []
+    kind: ServiceAlert
+    plural: servicealerts
+    shortNames: []
+    singular: servicealert
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns: []
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Auto-generated derived type for ServiceAlertSpec via `CustomResource`
+        properties:
+          spec:
+            properties:
+              alerts:
+                additionalProperties:
+                  items:
+                    properties:
+                      alertWithLabels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      for:
+                        type: string
+                      operation:
+                        enum:
+                        - EqualTo
+                        - LessThan
+                        - MoreThan
+                        type: string
+                      value:
+                        format: float
+                        type: number
+                    required:
+                    - alertWithLabels
+                    - for
+                    - operation
+                    - value
+                    type: object
+                  type: array
+                type: object
+              commonLabels:
+                additionalProperties:
+                  type: string
+                type: object
+              deploymentName:
+                type: string
+            required:
+            - alerts
+            - commonLabels
+            - deploymentName
+            type: object
+        required:
+        - spec
+        title: ServiceAlert
+        type: object
+    served: true
+    storage: true
+    subresources: {}

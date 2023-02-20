@@ -253,7 +253,7 @@ impl TryFrom<ServiceAlertSpec> for prometheus::alert::Alerts {
     type Error = color_eyre::Report;
 
     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
-        use prometheus::alert::*;
+        use crate::prometheus::alert::*;
 
         // FIXME: prodigious use of unwrap
         let replica_alert_config = value
