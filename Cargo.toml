@@ -5,14 +5,6 @@ name = "cactuar"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-name = "controller"
-path = "src/main.rs"
-
-[[bin]]
-name = "crdgen"
-path = "src/main_crdgen.rs"
-
 [dependencies]
 # async runtime
 tokio = { version = "1.25", features = ["full"] }

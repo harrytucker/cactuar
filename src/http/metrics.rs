@@ -7,19 +7,20 @@ use prometheus::{Registry, TextEncoder};
 /// run.
 ///
 /// In order to gather metrics from the registry, you should combine
-/// [`axum::State`] with a layer to expose your registry to this handler.
+/// [`axum::extract::State`] with a layer to expose your registry to this
+/// handler.
 ///
 /// # Example
 ///
 /// ```
-/// let metrics_registry = prometheus::Registry::new();
+/// let registry = prometheus::Registry::new();
 /// // register any metrics
 ///
 /// let http_router: axum::Router = axum::Router::new()
 ///     .with_state(registry);
 /// ```
 #[tracing::instrument]
-pub async fn prometheus_scrape_handler(
+pub async fn prometheus_handler(
     State(metrics_registry): State<Registry>,
 ) -> Result<String, StatusCode> {
     // Create a new Prometheus text encoder, and gather all our metrics.
@@ -51,7 +52,7 @@ mod test {
 
     fn test_router(registry: Registry, metric: Counter) -> Router {
         Router::new()
-            .route("/metrics", routing::get(prometheus_scrape_handler))
+            .route("/metrics", routing::get(prometheus_handler))
             .with_state(registry)
             .with_state(metric)
     }

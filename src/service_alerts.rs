@@ -1,14 +1,9 @@
+use std::collections::HashMap;
 use std::hash::Hash;
-use std::{collections::HashMap, fmt};
 
-// use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-/// Identifier that is recorded by the Kubernetes API for the purpose of
-/// identifying the application responsible for the given Kubernetes resource.
-const MANAGER_STRING: &str = "cactuar";
 
 pub const API_GROUP: &str = "cactuar.rs";
 pub const API_VERSION: &str = "v1alpha1";
@@ -39,20 +34,6 @@ pub enum Alerts {
     LatencyMillisecondsP90,
     LatencyMillisecondsP95,
     LatencyMillisecondsP99,
-}
-
-impl fmt::Display for Alerts {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Alerts::ReplicaCount => write!(f, ""),
-            Alerts::ErrorPercent => todo!(),
-            Alerts::TrafficPerSecond => todo!(),
-            Alerts::LatencyMillisecondsP50 => todo!(),
-            Alerts::LatencyMillisecondsP90 => todo!(),
-            Alerts::LatencyMillisecondsP95 => todo!(),
-            Alerts::LatencyMillisecondsP99 => todo!(),
-        }
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
