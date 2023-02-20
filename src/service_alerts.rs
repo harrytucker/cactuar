@@ -16,6 +16,7 @@ pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
     group = "cactuar.rs",
     version = "v1",
     kind = "ServiceAlert",
+    shortname = "alert",
     namespaced
 )]
 pub struct ServiceAlertSpec {
