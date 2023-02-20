@@ -43,16 +43,17 @@ pub struct Labels {
 pub struct Annotations {
     pub summary: String,
     pub description: String,
-    pub email_to: String,
 }
 
 impl TryFrom<Alerts> for BTreeMap<String, String> {
     type Error = color_eyre::Report;
 
     fn try_from(value: Alerts) -> Result<Self, Self::Error> {
+        // owner should be a unique identifier, so at least for now we can use
+        // it as the key for our `BTreeMap`
         let identifier = match value.groups.first() {
             Some(group) => match group.rules.first() {
-                Some(rule) => rule.annotations.email_to.clone(),
+                Some(rule) => rule.labels.owner.clone(),
                 None => return Err(eyre!("No rules defined in alert group.")),
             },
             None => return Err(eyre!("No alert rule groups defined.")),
@@ -84,8 +85,7 @@ groups:
       owner: service
     annotations:
       summary: High request latency
-      description: Request latency over 9000
-      email_to: mail@mail.com"#;
+      description: Request latency over 9000"#;
 
     #[test]
     fn test_serialisation_happy_path() -> Result<()> {
@@ -104,7 +104,6 @@ groups:
                     annotations: Annotations {
                         summary: "High request latency".into(),
                         description: "Request latency over 9000".into(),
-                        email_to: "mail@mail.com".into(),
                     },
                 }],
             }],
