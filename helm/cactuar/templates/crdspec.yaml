@@ -8,7 +8,8 @@ spec:
     categories: []
     kind: ServiceAlert
     plural: servicealerts
-    shortNames: []
+    shortNames:
+    - alert
     singular: servicealert
   scope: Namespaced
   versions:
