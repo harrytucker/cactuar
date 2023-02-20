@@ -255,6 +255,7 @@ impl TryFrom<ServiceAlertSpec> for prometheus::alert::Alerts {
     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
         use prometheus::alert::*;
 
+        // FIXME: prodigious use of unwrap
         let replica_alert_config = value
             .alerts
             .get(&service_alerts::Alerts::ReplicaCount)
