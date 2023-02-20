@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::hash::Hash;
+use std::{collections::HashMap, fmt};
 
 // use k8s_openapi::apimachinery::pkg::apis::meta::v1::OwnerReference;
 use kube::CustomResource;
@@ -41,14 +41,28 @@ pub enum Alerts {
     LatencyMillisecondsP99,
 }
 
+impl fmt::Display for Alerts {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Alerts::ReplicaCount => write!(f, ""),
+            Alerts::ErrorPercent => todo!(),
+            Alerts::TrafficPerSecond => todo!(),
+            Alerts::LatencyMillisecondsP50 => todo!(),
+            Alerts::LatencyMillisecondsP90 => todo!(),
+            Alerts::LatencyMillisecondsP95 => todo!(),
+            Alerts::LatencyMillisecondsP99 => todo!(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct AlertConfig {
-    operation: Operation,
-    value: f32,
+    pub operation: Operation,
+    pub value: f32,
     #[serde(rename = "for")]
-    for_: String, // want to be able to specify like 3m 4s
-    alert_with_labels: HashMap<String, String>,
+    pub for_: String, // want to be able to specify like 3m 4s
+    pub alert_with_labels: HashMap<String, String>,
 }
 
 // Kubernetes enums start with an upper case letter
@@ -74,6 +88,14 @@ pub struct ServiceAlertStatus {
     pub last_reconciled_at: Option<String>,
     pub reconciliation_expires_at: Option<String>,
 }
+
+// impl TryFrom<ServiceAlertSpec> for alert::Alerts {
+//     type Error = String;
+
+//     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
+//         todo!()
+//     }
+// }
 
 #[cfg(test)]
 mod test {

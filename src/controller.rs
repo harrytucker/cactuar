@@ -1,5 +1,5 @@
-use std::{collections::BTreeMap, sync::Arc};
 use std::result::Result;
+use std::{collections::BTreeMap, sync::Arc};
 
 use chrono::Utc;
 use futures::future::BoxFuture;
@@ -10,12 +10,12 @@ use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use kube::{
     api::{Api, ListParams, Patch, PatchParams, ResourceExt},
     client::Client,
-    Resource,
     runtime::{
         controller::Action,
         events::{Event, EventType, Recorder, Reporter},
-        finalizer::{Event as Finalizer, finalizer},
+        finalizer::{finalizer, Event as Finalizer},
     },
+    Resource,
 };
 use serde_json::json;
 use thiserror::Error;
@@ -23,8 +23,10 @@ use tokio::time::Duration;
 use uuid::Uuid;
 
 use crate::service_alerts::{
-    API_GROUP, API_VERSION, FINALIZER_NAME, KIND, ServiceAlert, ServiceAlertStatus,
+    ServiceAlert, ServiceAlertSpec, ServiceAlertStatus, API_GROUP, API_VERSION, FINALIZER_NAME,
+    KIND,
 };
+use crate::{prometheus, service_alerts};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -96,11 +98,10 @@ impl ServiceAlert {
         let service_alert_api: Api<ServiceAlert> = Api::namespaced(ctx.client.clone(), &namespace);
         let config_map_api: Api<ConfigMap> = Api::namespaced(ctx.client.clone(), &namespace);
 
+        let prom_alert = prometheus::alert::Alerts::try_from(self.spec.clone()).unwrap();
+
         let mut labels = BTreeMap::new();
         labels.insert("rules".to_string(), "prom-rule".to_string());
-
-        let mut data = BTreeMap::new();
-        data.insert("message".to_string(), "hello :)".to_string());
 
         tracing::info!(
             name=?&self.metadata.name.as_ref().unwrap(),
@@ -118,7 +119,7 @@ impl ServiceAlert {
                 owner_references: Some(vec![self.controller_owner_ref(&()).unwrap()]),
                 ..ObjectMeta::default()
             },
-            data: Some(data),
+            data: Some(BTreeMap::try_from(prom_alert).unwrap()),
             // data: Some(contents),
             ..Default::default()
         };
@@ -146,11 +147,11 @@ impl ServiceAlert {
 
         let requeue_duration: u64 = 5 * 60;
         let new_status = Patch::Apply(json!({
-            "apiVersion": format!("{}/{}", API_GROUP, API_VERSION),
+            "apiVersion": format!("{API_GROUP}/{API_VERSION}"),
             "kind": KIND,
             "status": ServiceAlertStatus{
                 last_reconciled_at: Some(Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
-                reconciliation_expires_at: Some((Utc::now() + chrono::Duration::seconds(requeue_duration.clone() as i64)).format("%Y-%m-%dT%H:%M:%S").to_string()),
+                reconciliation_expires_at: Some((Utc::now() + chrono::Duration::seconds(requeue_duration as i64)).format("%Y-%m-%dT%H:%M:%S").to_string()),
             }
         }));
 
@@ -171,9 +172,7 @@ impl ServiceAlert {
             .await?;
 
         // If no events were received, check back every 5 minutes
-        Ok(Action::requeue(Duration::from_secs(
-            requeue_duration.clone(),
-        )))
+        Ok(Action::requeue(Duration::from_secs(requeue_duration)))
     }
 
     // Reconcile with finalize cleanup (the object was deleted)
@@ -247,5 +246,42 @@ impl CactuarController {
                 .boxed();
 
         (Self {}, controller)
+    }
+}
+
+impl TryFrom<ServiceAlertSpec> for prometheus::alert::Alerts {
+    type Error = color_eyre::Report;
+
+    fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
+        use prometheus::alert::*;
+
+        // FIXME: prodigious use of unwrap
+        let replica_alert_config = value
+            .alerts
+            .get(&service_alerts::Alerts::ReplicaCount)
+            .unwrap()
+            .first()
+            .unwrap();
+
+        let mut alerts = Alerts { groups: vec![] };
+        alerts.groups.push(AlertGroup {
+            name: "replicas".into(),
+            rules: vec![AlertRules {
+                alert: "all replicas down".into(),
+                expr: r#"sum by (app_kubernetes_io_name) (up{app_kubernetes_io_name="software-catalog-grpc"}) == 0"#.into(),
+                for_: replica_alert_config.for_.clone(),
+                labels: Labels {
+                    severity: PrometheusSeverity::Critical,
+                    source: value.common_labels.get("origin").unwrap().into(),
+                    owner: value.common_labels.get("owner").unwrap().into(),
+                },
+                annotations: Annotations {
+                    summary: "{{ $labels.app_kubernetes_io_name }} down".into(),
+                    description: "{{ $labels.app_kubernetes_io_name }} has 0 replicas".into(),
+                },
+            }],
+        });
+
+        Ok(alerts)
     }
 }
