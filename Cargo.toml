@@ -46,6 +46,11 @@ thiserror = "1.0.38"
 
 # http
 axum = "0.6.7"
+hyper = "*" # use same version as axum
+tower = "*" # use same version as axum
+
+# metrics
+prometheus = { version = "0.13.3", features = ["process"] }
 
 # configuration
 config = "0.13"
