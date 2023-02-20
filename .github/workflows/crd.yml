@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Generate CRD
-      run: cargo run --bin crdgen > helm/templates/crdspec.yaml
+      run: cargo run --bin crdgen > ./helm/templates/crdspec.yaml
     - name: Check if up-to-date
       run: |
         if [ -z "$(git status --porcelain)" ]; then \
