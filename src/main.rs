@@ -58,6 +58,9 @@
 //! - Cargo Makefile
 //! - Project architecture
 
+use std::net::SocketAddr;
+
+use axum::http::StatusCode;
 use color_eyre::Result;
 use tokio::signal;
 
@@ -81,13 +84,29 @@ async fn main() -> Result<()> {
     // Start kubernetes controller
     let (_, control_future) = CactuarController::new().await;
     tokio::task::Builder::new()
-        .name("Controller Future")
+        .name("Controller")
         .spawn(control_future)?;
 
     tracing::info!("Cactuar is now watching!");
 
+    let serve_addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+    let http_future = axum::Server::bind(&serve_addr).serve(http_router().into_make_service());
+    tokio::task::Builder::new()
+        .name("HTTP")
+        .spawn(http_future)?;
+
+    tracing::info!(%serve_addr, "Cactuar now ready to serve requests");
+
     signal::ctrl_c().await?;
     Ok(())
+}
+
+fn http_router() -> axum::Router {
+    axum::Router::new().route("/readiness", axum::routing::get(readiness_check))
+}
+
+async fn readiness_check() -> axum::http::StatusCode {
+    StatusCode::NO_CONTENT
 }
 
 // We can come back to this later
