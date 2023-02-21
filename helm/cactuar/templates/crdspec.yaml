@@ -59,10 +59,22 @@ spec:
             - commonLabels
             - deploymentName
             type: object
+          status:
+            description: The status object of `StatusAlerter`
+            nullable: true
+            properties:
+              lastReconciledAt:
+                nullable: true
+                type: string
+              reconciliationExpiresAt:
+                nullable: true
+                type: string
+            type: object
         required:
         - spec
         title: ServiceAlert
         type: object
     served: true
     storage: true
-    subresources: {}
+    subresources:
+      status: {}

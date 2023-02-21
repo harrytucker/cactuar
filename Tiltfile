@@ -8,6 +8,7 @@ docker_build(
     "cactuar",
     context=".",
     dockerfile="./Dockerfile",
+    ignore=["./helm/"]
 )
 
 # Deploy the local Helm chart to your running Kubernetes cluster. Note that this

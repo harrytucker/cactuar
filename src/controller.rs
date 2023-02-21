@@ -7,6 +7,7 @@ use futures::FutureExt;
 use futures::StreamExt;
 use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
+use kube::runtime::controller::Controller;
 use kube::{
     api::{Api, ListParams, Patch, PatchParams, ResourceExt},
     client::Client,
@@ -48,6 +49,7 @@ struct Context {
     reporter: Reporter,
 }
 
+#[tracing::instrument(skip(ctx, obj))]
 async fn reconcile(obj: Arc<ServiceAlert>, ctx: Arc<Context>) -> Result<Action, Error> {
     tracing::info!(
         name=?obj.metadata.name.as_ref().unwrap(),
@@ -55,7 +57,6 @@ async fn reconcile(obj: Arc<ServiceAlert>, ctx: Arc<Context>) -> Result<Action, 
         "received reconcile request"
     );
 
-    // let client = ctx.client.clone();
     let ns = obj.namespace().unwrap();
     let api: Api<ServiceAlert> = Api::namespaced(ctx.client.clone(), &ns);
 
@@ -237,13 +238,12 @@ impl CactuarController {
 
         // All good. Start controller and return its future.
 
-        let controller =
-            kube::runtime::controller::Controller::new(service_alerter_api, ListParams::default())
-                .owns(config_map_api, ListParams::default())
-                .run(reconcile, error_policy, context)
-                .filter_map(|x| async move { std::result::Result::ok(x) })
-                .for_each(|_| futures::future::ready(()))
-                .boxed();
+        let controller = Controller::new(service_alerter_api, ListParams::default())
+            .owns(config_map_api, ListParams::default())
+            .run(reconcile, error_policy, context)
+            .filter_map(|x| async move { std::result::Result::ok(x) })
+            .for_each(|_| futures::future::ready(()))
+            .boxed();
 
         (Self {}, controller)
     }
