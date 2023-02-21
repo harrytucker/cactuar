@@ -1,4 +1,4 @@
-use hyper::StatusCode;
+use axum::http::StatusCode;
 
 /// Currently a no-op that returns a `204 NO CONTENT` response. If Cactuar gets
 /// to the point where this can be served, the controller task should already be

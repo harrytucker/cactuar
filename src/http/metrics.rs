@@ -1,6 +1,5 @@
-use axum::extract::State;
+use axum::{extract::State, http::StatusCode};
 use color_eyre::Result;
-use hyper::StatusCode;
 use prometheus::{Registry, TextEncoder};
 
 /// HTTP endpoint that exposes all registered metrics to a Prometheus scrape
@@ -40,7 +39,7 @@ pub async fn prometheus_handler(
 mod test {
     use axum::{body::Body, http::Request, routing, Router};
     use prometheus::{Counter, Opts};
-    use tower::ServiceExt;
+    use tower::ServiceExt; // provides useful utils for tests
 
     use super::*;
 
