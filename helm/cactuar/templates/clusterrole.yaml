@@ -3,32 +3,22 @@ kind: ClusterRole
 metadata:
   name: cactuar
 rules:
-  - apiGroups:
-    - cactuar.rs
-    resources:
-    - servicealerts
+  - apiGroups: ["cactuar.rs"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
     verbs:
-      - "*"
-{{/*    - get*/}}
-{{/*    - list*/}}
-{{/*    - watch*/}}
-{{/*    - patch*/}}
-
-  - apiGroups:
-    - cactuar.rs
-    resources:
-    - servicealerts/status
+      - "create"
+      - "get"
+      - "list"
+      - "delete"
+      - "patch"
+  - apiGroups: ["events.k8s.io"]
+    resources: ["events"]
     verbs:
-      - "*"
-{{/*    - get*/}}
-{{/*    - patch*/}}
-{{/*    - update*/}}
-
-  - apiGroups:
-    - ""
-    resources:
-    - configmaps
-    verbs:
-    # TODO: this is too permissive but I was having a bad time
-    - "*"
-{{/*    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]*/}}
+      - "create"
+      - "get"
+      - "list"
+      - "delete"
+      - "patch"
