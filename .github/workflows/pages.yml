@@ -32,13 +32,19 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup Pages
         uses: actions/configure-pages@v3
-      - name: Generate Docs
-        run: cargo doc --all --no-deps
+      - name: Generate docs
+        run: cargo doc --no-deps
+      - name: Empty Pages directory
+        run: rm -rf ./docs
+      - name: Generate index.html
+        run: echo "<meta http-equiv=\"refresh\" content=\"0; url=cactuar\">" > target/doc/index.html
+      - name: Copy into external docs directory
+        run: cp -r ./target/doc ./docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: "./target/doc/cactuar"
+          path: "./docs"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
