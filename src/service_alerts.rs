@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 pub const API_GROUP: &str = "cactuar.rs";
-pub const API_VERSION: &str = "v1alpha1";
+pub const API_VERSION: &str = "v1";
 pub const KIND: &str = "ServiceAlert";
 pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
 
@@ -17,6 +17,7 @@ pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
     version = "v1",
     kind = "ServiceAlert",
     shortname = "alert",
+    status = "ServiceAlertStatus",
     namespaced
 )]
 pub struct ServiceAlertSpec {
