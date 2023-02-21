@@ -50,7 +50,6 @@ use serde::Deserialize;
 /// implementation of it.
 pub struct CactuarConfig {
     pub log: Log,
-
     pub http: HTTP,
 }
 
