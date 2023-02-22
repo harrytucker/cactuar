@@ -24,33 +24,40 @@ pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
     namespaced
 )]
 pub struct ServiceAlertSpec {
-    pub common_labels: HashMap<String, String>,
+    pub common_labels: CommonLabels,
     pub deployment_name: String,
-    pub metric_type: MetricType,
-    pub alerts: HashMap<Alerts, Vec<AlertConfig>>,
+    pub alerts: Alerts,
 }
-
 
 // Since the metrics are different for different protocols, we must map each Alerts enum
 // to a different expression string in prometheus land.
 // e.g.
 // REST + ErrorPercent uses the istio_requests_total         istio standard metric
 // gRPC + ErrorPercent uses the istio_request_messages_total istio standard metric
-// TODO: TCP has no equivalent, so we must handle that at a later date
-// see https://istio.io/latest/docs/reference/config/metrics/ for more information
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
-pub enum MetricType {
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
+pub struct Alerts {
     #[serde(rename = "gRPC")]
-    GRPC,
+    pub GRPC: Option<HashMap<HttpAlerts,Vec<HttpAlertConfig>>>,
     #[serde(rename = "REST")]
-    REST,
-    // #[serde(rename = "TCP")]
-    // TCP,
+    pub REST: Option<HashMap<HttpAlerts,Vec<HttpAlertConfig>>>,
+    // TODO: Define what is needed for misc here. look into what alerts we can support first
+    // There's a problem that the alertConfig changes for potentially every different misc
+    // alert so we can't support the Vec<HttpAlertConfig> pattern like we do with gRPC and REST
+    // pub Misc: Option<HashMap<MiscAlerts, $something>>,
+}
+
+// It would be cool if we could union this struct with a HashMap<String, String>
+// so that we can validate at deploy time the owner and origin fields but also allow
+// arbitrary fields
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq)]
+pub struct CommonLabels {
+    pub owner: String,
+    pub origin: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
-pub enum Alerts {
+pub enum HttpAlerts {
     ReplicaCount,
     ErrorPercent,
     TrafficPerSecond,
@@ -60,9 +67,16 @@ pub enum Alerts {
     LatencyMillisecondsP99,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub enum MiscAlerts {
+    AllReplicasDown,
+    LowReplicaCount
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct AlertConfig {
+pub struct HttpAlertConfig {
     operation: Operation,
     value: f32,
     #[serde(rename = "for")]
@@ -146,9 +160,9 @@ alerts:
             deployment_name: String::from("best-service-eu"),
             alerts: HashMap::from([
                 (
-                    Alerts::ReplicaCount,
+                    HttpAlerts::ReplicaCount,
                     vec![
-                        AlertConfig {
+                        HttpAlertConfig {
                             operation: Operation::LessThan,
                             value: 3 as f32,
                             for_: String::from("3m"),
@@ -157,7 +171,7 @@ alerts:
                                 String::from("warning"),
                             )]),
                         },
-                        AlertConfig {
+                        HttpAlertConfig {
                             operation: Operation::EqualTo,
                             value: 0 as f32,
                             for_: String::from("0m"),
@@ -169,9 +183,9 @@ alerts:
                     ],
                 ),
                 (
-                    Alerts::LatencyMillisecondsP99,
+                    HttpAlerts::LatencyMillisecondsP99,
                     vec![
-                        AlertConfig {
+                        HttpAlertConfig {
                             operation: Operation::MoreThan,
                             value: 20 as f32,
                             for_: String::from("5m"),
@@ -180,7 +194,7 @@ alerts:
                                 String::from("warning"),
                             )]),
                         },
-                        AlertConfig {
+                        HttpAlertConfig {
                             operation: Operation::MoreThan,
                             value: 50 as f32,
                             for_: String::from("2m"),
@@ -192,8 +206,8 @@ alerts:
                     ],
                 ),
                 (
-                    Alerts::LatencyMillisecondsP50,
-                    vec![AlertConfig {
+                    HttpAlerts::LatencyMillisecondsP50,
+                    vec![HttpAlertConfig {
                         operation: Operation::MoreThan,
                         value: 20 as f32,
                         for_: String::from("0m"),
