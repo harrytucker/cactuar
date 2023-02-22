@@ -1,52 +1,79 @@
-# If your action needs to run a Cactuar binary (i.e. build the project), it
-# should go in here and `needs` the build job to avoid unnecessarily building
-# the project repeatedly.
-name: Rust Checks
+name: Rust
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  test:
+    name: Test
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo test --all-features
 
-    - name: Set up Cargo cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo fmt --all -- --check
 
-    - name: Build
-      run: cargo build --verbose
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo clippy -- -D warnings
 
-    - name: Run tests
-      run: cargo test --verbose
-
-    - name: Generate CRD
-      run: cargo run --bin crdgen > ./helm/cactuar/templates/crdspec.yaml
-
-    - name: Check if up-to-date
-      run: |
-        if [ -z "$(git status --porcelain)" ]; then \
-          echo "Generated code is up-to-date!"; \
-        else \
-          echo "You forgot to generate something..."; \
-          echo "Here's the diff:"; \
-          git --no-pager diff; \
-          exit 1; \
-        fi
+  generated-files:
+    name: Generated Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: |
+          if [ -z "$(git status --porcelain)" ]; then \
+            echo "Generated code is up-to-date!"; \
+          else \
+            echo "You forgot to generate something..."; \
+            echo "Here's the diff:"; \
+            git --no-pager diff; \
+            exit 1; \
+          fi
