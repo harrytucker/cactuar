@@ -7,7 +7,10 @@ use kube::{
 };
 use thiserror::Error;
 
+use super::operations::OperationError;
 use crate::service_alerts::{ServiceAlert, FINALIZER_NAME};
+
+const FAIL_REQUEUE_DURATION: u64 = 10;
 
 // Context for our reconciler
 #[derive(Clone)]
@@ -17,49 +20,44 @@ pub struct Context {
     pub reporter: Reporter,
 }
 
-#[derive(Error, Debug)]
-pub enum Error {
+#[derive(Debug, Error)]
+pub enum ReconcilerError {
     #[error("Finalizer Error: {0}")]
-    FinalizerError(#[source] kube::runtime::finalizer::Error<kube::Error>),
-    // #[error("SerializationError: {0}")]
-    // SerializationError(#[source] serde_json::Error),
-    #[error("Failed to create ConfigMap: {0}")]
-    ConfigMapCreationFailed(#[source] kube::Error),
-    // #[error("MissingObjectKey: {0}")]
-    // MissingObjectKey(&'static str),
+    Finalizer(#[source] kube::runtime::finalizer::Error<OperationError>),
+    #[error("MissingObjectKey: {0}")]
+    MissingObjectKey(&'static str),
 }
 
-#[tracing::instrument(skip(ctx, crd))]
-pub async fn reconcile(crd: Arc<ServiceAlert>, ctx: Arc<Context>) -> Result<Action, Error> {
-    tracing::info!(
-        name=?crd.metadata.name.as_ref().unwrap(),
-        namespace=?crd.metadata.namespace.as_ref().unwrap(),
-        "received reconcile request"
-    );
+#[tracing::instrument(skip(ctx, crd), fields(crd.metadata.name, crd.metadata.namespace))]
+pub async fn reconcile(
+    crd: Arc<ServiceAlert>,
+    ctx: Arc<Context>,
+) -> Result<Action, ReconcilerError> {
+    tracing::info!("reconciling");
 
-    let ns = crd.namespace().unwrap();
+    let ns = crd
+        .namespace()
+        .ok_or_else(|| ReconcilerError::MissingObjectKey("namespace"))?;
     let api: Api<ServiceAlert> = Api::namespaced(ctx.client.clone(), &ns);
 
     kube::runtime::finalizer(&api, FINALIZER_NAME, crd, |event| async {
         match event {
-            Event::Apply(alert) => alert.create_or_update(ctx.clone()).await,
+            Event::Apply(alert) => alert.update(ctx.clone()).await,
             Event::Cleanup(alert) => alert.cleanup(ctx.clone()).await,
         }
     })
     .await
-    .map_err(Error::FinalizerError)
+    .map_err(ReconcilerError::Finalizer)
 }
 
-#[tracing::instrument(skip(_ctx, crd))]
-pub fn error_policy(crd: Arc<ServiceAlert>, error: &Error, _ctx: Arc<Context>) -> Action {
-    let requeue_interval = 60;
-    tracing::error!(
-        %error,
-        name=?crd.metadata.name.as_ref().unwrap(),
-        namespace=?crd.metadata.namespace.as_ref().unwrap(),
-        requeue_interval,
-        "reconciliation failed, re-queueing"
-    );
-
-    Action::requeue(Duration::from_secs(requeue_interval))
+#[tracing::instrument(skip(_crd, _ctx), fields(crd.metadata.name, crd.metadata.namespace))]
+pub fn error_policy(
+    _crd: Arc<ServiceAlert>,
+    error: &ReconcilerError,
+    _ctx: Arc<Context>,
+) -> Action {
+    // All of our owned resources are entirely contained within Kubernetes, so
+    // if we encounter an error, we can just requeue reconciliation.
+    tracing::error!(FAIL_REQUEUE_DURATION, "reconciliation failed, re-queueing");
+    Action::requeue(Duration::from_secs(FAIL_REQUEUE_DURATION))
 }

@@ -1,140 +1,100 @@
-use std::{collections::BTreeMap, result::Result, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use chrono::Utc;
-use futures::future::BoxFuture;
-use futures::FutureExt;
-use futures::StreamExt;
 use k8s_openapi::api::core::v1::ConfigMap;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
-use kube::runtime::controller::Controller;
 use kube::{
-    api::{Api, ListParams, Patch, PatchParams, ResourceExt},
-    client::Client,
+    api::{Api, Patch, PatchParams, ResourceExt},
     runtime::{
         controller::Action,
-        events::{Event, EventType, Recorder, Reporter},
+        events::{Event, EventType, Recorder},
     },
     Resource,
 };
-use serde_json::json;
-
+use thiserror::Error;
 use tokio::time::Duration;
-use uuid::Uuid;
 
-use crate::kubernetes::reconciler::Error;
-use crate::prometheus;
-use crate::service_alerts::{
-    ServiceAlert, ServiceAlertStatus, API_GROUP, API_VERSION, FINALIZER_NAME, KIND,
-};
+use crate::prometheus::alert::PromAlerts;
+use crate::service_alerts::{ServiceAlert, ServiceAlertStatus, API_GROUP, FINALIZER_NAME};
 
-use super::reconciler::{self, Context};
+use super::reconciler::Context;
+
+#[derive(Debug, Error)]
+pub enum OperationError {
+    #[error("Failed to create ConfigMap: {0}")]
+    ConfigMapCreationFailed(#[source] kube::Error),
+    #[error("MissingObjectKey: {0}")]
+    MissingObjectKey(&'static str),
+    #[error(transparent)]
+    Kube(#[from] kube::Error),
+    #[error(transparent)]
+    Other(#[from] color_eyre::Report),
+}
+
+const SUCCESSFUL_REQUEUE_DURATION: u64 = 5 * 60;
 
 impl ServiceAlert {
     // Reconcile (for non-finalizer related changes)
-    pub async fn create_or_update(&self, ctx: Arc<Context>) -> Result<Action, kube::Error> {
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "reconciling request"
-        );
+    #[tracing::instrument(skip_all, fields(self.metadata.name, self.metadata.namespace))]
+    pub async fn update(&self, ctx: Arc<Context>) -> Result<Action, OperationError> {
         let name = self.name_any();
-        let namespace = self.namespace().unwrap();
+        let namespace = self
+            .namespace()
+            .ok_or_else(|| OperationError::MissingObjectKey("namespace"))?;
+        let owner_references = self
+            .controller_owner_ref(&())
+            .ok_or_else(|| OperationError::MissingObjectKey("owner_references"))?;
 
         let service_alert_api: Api<ServiceAlert> = Api::namespaced(ctx.client.clone(), &namespace);
         let config_map_api: Api<ConfigMap> = Api::namespaced(ctx.client.clone(), &namespace);
 
-        let prom_alert = prometheus::alert::PromAlerts::try_from(self.spec.clone()).unwrap();
+        let prom_alert = PromAlerts::try_from(self.spec.clone())?;
 
-        let mut labels = BTreeMap::new();
-        labels.insert("rules".to_string(), "prom-rule".to_string());
-
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "building configmap"
-        );
+        tracing::debug!("building configmap");
         let cm = ConfigMap {
             metadata: ObjectMeta {
                 name: Some(name.clone()),
                 namespace: Some(namespace),
                 // This label is what allows prometheus to pick up the configMap
-                labels: Some(labels),
-
-                // finalizers: Some(vec![FINALIZER_NAME]),
-                owner_references: Some(vec![self.controller_owner_ref(&()).unwrap()]),
+                labels: Some(BTreeMap::from([("rules".into(), "prom-rule".into())])),
+                owner_references: Some(vec![owner_references]),
                 ..ObjectMeta::default()
             },
-            data: Some(BTreeMap::try_from(prom_alert).unwrap()),
-            // data: Some(contents),
+            data: Some(BTreeMap::try_from(prom_alert)?),
             ..Default::default()
         };
 
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "patching configmap"
-        );
+        tracing::debug!("patching configmap");
         config_map_api
             .patch(
                 &name,
                 &PatchParams::apply(FINALIZER_NAME),
                 &Patch::Apply(&cm),
             )
-            .await
-            .map_err(Error::ConfigMapCreationFailed)
-            .unwrap();
+            .await?;
 
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "building ServiceAlert status"
-        );
-
-        let requeue_duration: u64 = 5 * 60;
-        let new_status = Patch::Apply(json!({
-            "apiVersion": format!("{API_GROUP}/{API_VERSION}"),
-            "kind": KIND,
-            "status": ServiceAlertStatus{
-                last_reconciled_at: Some(Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
-                reconciliation_expires_at: Some((Utc::now() + chrono::Duration::seconds(requeue_duration as i64)).format("%Y-%m-%dT%H:%M:%S").to_string()),
-            }
-        }));
-
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "building ServiceAlert status"
-        );
-        let ps = PatchParams::apply("cntrlr").force();
-
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "getting ServiceAlert patch status"
-        );
+        tracing::debug!("getting ServiceAlert patch status");
+        let ps = PatchParams::apply(API_GROUP).force();
         let _o = service_alert_api
-            .patch_status(&name, &ps, &new_status)
+            .patch_status(&name, &ps, &self.generate_status_patch())
             .await?;
 
         // If no events were received, check back every 5 minutes
-        Ok(Action::requeue(Duration::from_secs(requeue_duration)))
+        Ok(Action::requeue(Duration::from_secs(
+            SUCCESSFUL_REQUEUE_DURATION,
+        )))
     }
 
     // Reconcile with finalize cleanup (the object was deleted)
-    pub async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action, kube::Error> {
-        tracing::info!(
-            name=?&self.metadata.name.as_ref().unwrap(),
-            namespace=?&self.metadata.namespace.as_ref().unwrap(),
-            "deleting resource",
-        );
+    #[tracing::instrument(skip_all, fields(self.metadata.name, self.metadata.namespace))]
+    pub async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action, OperationError> {
+        tracing::debug!("deleting resource");
 
         let recorder = Recorder::new(
             ctx.client.clone(),
             ctx.reporter.clone(),
             self.object_ref(&()),
         );
-
-        // TODO: delete the configmap
 
         recorder
             .publish(Event {
@@ -147,5 +107,18 @@ impl ServiceAlert {
             .await?;
 
         Ok(Action::await_change())
+    }
+
+    #[tracing::instrument]
+    pub fn generate_status_patch(&self) -> Patch<ServiceAlertStatus> {
+        tracing::debug!("building ServiceAlert status");
+        Patch::Apply(ServiceAlertStatus {
+            last_reconciled_at: Some(Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
+            reconciliation_expires_at: Some(
+                (Utc::now() + chrono::Duration::seconds(SUCCESSFUL_REQUEUE_DURATION as i64))
+                    .format("%Y-%m-%dT%H:%M:%S")
+                    .to_string(),
+            ),
+        })
     }
 }
