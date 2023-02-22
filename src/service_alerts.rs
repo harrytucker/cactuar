@@ -71,7 +71,8 @@ pub enum HttpAlerts {
 #[serde(rename_all = "camelCase")]
 pub enum MiscAlerts {
     AllReplicasDown,
-    LowReplicaCount
+    LowReplicaCount,
+    PodsFrequentlyRestarting,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
