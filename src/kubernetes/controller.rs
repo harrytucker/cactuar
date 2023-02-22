@@ -45,6 +45,7 @@ pub async fn controller_future() -> BoxFuture<'static, ()> {
     Controller::new(service_alerter_api, ListParams::default())
         .owns(config_map_api, ListParams::default())
         .run(reconciler::reconcile, reconciler::error_policy, context)
+        .filter_map(|x| async move { std::result::Result::ok(x) })
         .for_each(|_| futures::future::ready(()))
         .boxed()
 }
