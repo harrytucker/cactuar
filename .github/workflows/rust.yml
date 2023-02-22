@@ -68,7 +68,8 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - run: cargo run --bin crdgen > ./helm/cactuar/templates/crdspec.yaml
+      - run: cargo install cargo-make
+      - run: cargo make helm-crd
       - run: |
           if [ -z "$(git status --porcelain)" ]; then \
             echo "Generated code is up-to-date!"; \
