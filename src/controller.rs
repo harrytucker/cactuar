@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::result::Result;
 use std::{collections::BTreeMap, sync::Arc};
 
@@ -23,11 +24,13 @@ use thiserror::Error;
 use tokio::time::Duration;
 use uuid::Uuid;
 
+use crate::prometheus;
+use crate::prometheus::alert::PrometheusSeverity;
+use crate::service_alerts::Alerts::ReplicaCount;
 use crate::service_alerts::{
     ServiceAlert, ServiceAlertSpec, ServiceAlertStatus, API_GROUP, API_VERSION, FINALIZER_NAME,
     KIND,
 };
-use crate::{prometheus, service_alerts};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -60,16 +63,14 @@ async fn reconcile(obj: Arc<ServiceAlert>, ctx: Arc<Context>) -> Result<Action, 
     let ns = obj.namespace().unwrap();
     let api: Api<ServiceAlert> = Api::namespaced(ctx.client.clone(), &ns);
 
-    let action = finalizer(&api, FINALIZER_NAME, obj, |event| async {
+    finalizer(&api, FINALIZER_NAME, obj, |event| async {
         match event {
             Finalizer::Apply(alert) => alert.create_or_update(ctx.clone()).await,
             Finalizer::Cleanup(alert) => alert.cleanup(ctx.clone()).await,
         }
     })
     .await
-    .map_err(Error::FinalizerError);
-
-    action
+    .map_err(Error::FinalizerError)
 }
 
 fn error_policy(service_alert: Arc<ServiceAlert>, error: &Error, _ctx: Arc<Context>) -> Action {
@@ -249,39 +250,56 @@ impl CactuarController {
     }
 }
 
+/// FIXME: This should be replaced with a generated/converted when possible.
+/// Once this is marked as DEAD_CODE then we are good to go!
+const PLACEHOLDER_VALUE: &str = "PLACEHOLDER";
+
 impl TryFrom<ServiceAlertSpec> for prometheus::alert::Alerts {
     type Error = color_eyre::Report;
 
     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
         use crate::prometheus::alert::*;
 
-        // FIXME: prodigious use of unwrap
-        let replica_alert_config = value
-            .alerts
-            .get(&service_alerts::Alerts::ReplicaCount)
-            .unwrap()
-            .first()
-            .unwrap();
+        let mut alerts = Alerts {
+            groups: Vec::with_capacity(value.alerts.len()),
+        };
 
-        let mut alerts = Alerts { groups: vec![] };
-        alerts.groups.push(AlertGroup {
-            name: "replicas".into(),
-            rules: vec![AlertRules {
-                alert: "all replicas down".into(),
-                expr: r#"sum by (app_kubernetes_io_name) (up{app_kubernetes_io_name="software-catalog-grpc"}) == 0"#.into(),
-                for_: replica_alert_config.for_.clone(),
-                labels: Labels {
-                    severity: PrometheusSeverity::Critical,
-                    source: value.common_labels.get("origin").unwrap().into(),
-                    owner: value.common_labels.get("owner").unwrap().into(),
-                },
-                annotations: Annotations {
-                    summary: "{{ $labels.app_kubernetes_io_name }} down".into(),
-                    description: "{{ $labels.app_kubernetes_io_name }} has 0 replicas".into(),
-                },
-            }],
-        });
+        if let Some(replica_alerts) = value.alerts.get(&ReplicaCount) {
+            let replica_rules = replica_alerts
+                .iter()
+                .map(|conf| AlertRules {
+                    alert: PLACEHOLDER_VALUE.into(),
+                    expr: PLACEHOLDER_VALUE.into(),
+                    for_: conf.for_.clone(),
+                    labels: Labels {
+                        severity: PrometheusSeverity::from(&conf.alert_with_labels),
+                        source: value.common_labels.get("origin").unwrap().into(),
+                        owner: value.common_labels.get("owner").unwrap().into(),
+                    },
+                    annotations: Annotations {
+                        summary: PLACEHOLDER_VALUE.into(),
+                        description: PLACEHOLDER_VALUE.into(),
+                    },
+                })
+                .collect();
+
+            alerts.groups.push(AlertGroup {
+                name: PLACEHOLDER_VALUE.into(),
+                rules: replica_rules,
+            })
+        }
 
         Ok(alerts)
+    }
+}
+
+impl From<&HashMap<String, String>> for PrometheusSeverity {
+    fn from(value: &HashMap<String, String>) -> Self {
+        match value.get("severity").unwrap().as_str() {
+            "warning" => PrometheusSeverity::Warning,
+            "critical" => PrometheusSeverity::Critical,
+            "page" => PrometheusSeverity::Page,
+            _ => PrometheusSeverity::Warning,
+        }
     }
 }
