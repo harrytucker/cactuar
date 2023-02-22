@@ -10,7 +10,9 @@
 use color_eyre::Result;
 use tokio::signal;
 
-use cactuar::{config::CactuarConfig, controller::CactuarController, http::router, logging};
+use cactuar::{
+    config::CactuarConfig, http::router, kubernetes::controller::controller_future, logging,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,20 +22,20 @@ async fn main() -> Result<()> {
     logging::set_global_logger(subscriber)?;
 
     // Start kubernetes controller
-    let (_, control_future) = CactuarController::new().await;
+    let control_future = controller_future().await;
     tokio::task::Builder::new()
         .name("K8s Controller")
         .spawn(control_future)?;
 
-    tracing::info!("Cactuar is now watching!");
+    tracing::info!("Cactuar now controlling resources.");
 
     let serve_addr = config.http.serve_addr();
     let http_future = axum::Server::bind(&serve_addr).serve(router()?.into_make_service());
     tokio::task::Builder::new()
-        .name("HTTP")
+        .name("HTTP Server")
         .spawn(http_future)?;
 
-    tracing::info!(%serve_addr, "Cactuar now ready to serve requests");
+    tracing::info!(%serve_addr, "Cactuar ready to serve requests.");
 
     signal::ctrl_c().await?;
     Ok(())

@@ -51,7 +51,7 @@
 pub mod config;
 
 /// Logic for monitoring and reconciling of Kubernetes resources.
-pub mod controller;
+pub mod kubernetes;
 
 /// HTTP router and handlers for exposing readiness and Prometheus metrics.
 pub mod http;
