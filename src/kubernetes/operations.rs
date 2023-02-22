@@ -53,7 +53,7 @@ impl ServiceAlert {
 
         let prom_alert = PromAlerts::try_from(self.spec.clone())?;
 
-        tracing::debug!("building configmap");
+        tracing::debug!("Generating ConfigMap");
         let cm = ConfigMap {
             metadata: ObjectMeta {
                 name: Some(name.clone()),
@@ -67,7 +67,7 @@ impl ServiceAlert {
             ..Default::default()
         };
 
-        tracing::debug!("patching configmap");
+        tracing::debug!("Patching ConfigMap");
         config_map_api
             .patch(
                 &name,
@@ -76,7 +76,7 @@ impl ServiceAlert {
             )
             .await?;
 
-        tracing::debug!("getting ServiceAlert patch status");
+        tracing::debug!("Updating ServiceAlert status");
         let ps = PatchParams::apply(API_GROUP).force();
         service_alert_api
             .patch_status(&name, &ps, &Patch::Apply(self.generate_status_patch()))
@@ -91,7 +91,7 @@ impl ServiceAlert {
     // Reconcile with finalize cleanup (the object was deleted)
     #[tracing::instrument(skip_all, fields(self.metadata.name, self.metadata.namespace))]
     pub async fn cleanup(&self, ctx: Arc<Context>) -> Result<Action, OperationError> {
-        tracing::debug!("deleting resource");
+        tracing::debug!("Deleting ServiceAlert");
 
         let recorder = Recorder::new(
             ctx.client.clone(),
@@ -114,8 +114,6 @@ impl ServiceAlert {
 
     #[tracing::instrument(skip_all)]
     pub fn generate_status_patch(&self) -> serde_json::Value {
-        tracing::debug!("building ServiceAlert status");
-
         // Ideally this could return a Patch::Apply<ServiceAlertStatus>, but
         // there's an odd interaction with kube.rs here, where `apiVersion` is
         // required and presumably generated from our struct, but not available

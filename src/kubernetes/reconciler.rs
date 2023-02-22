@@ -33,7 +33,7 @@ pub async fn reconcile(
     crd: Arc<ServiceAlert>,
     ctx: Arc<Context>,
 ) -> Result<Action, ReconcilerError> {
-    tracing::info!("reconciling");
+    tracing::info!("Reconciling");
 
     let ns = crd
         .namespace()
@@ -58,6 +58,6 @@ pub fn error_policy(
 ) -> Action {
     // All of our owned resources are entirely contained within Kubernetes, so
     // if we encounter an error, we can just requeue reconciliation.
-    tracing::error!(FAIL_REQUEUE_DURATION, "reconciliation failed, re-queueing");
+    tracing::error!(FAIL_REQUEUE_DURATION, "Reconciliation failed, re-queueing");
     Action::requeue(Duration::from_secs(FAIL_REQUEUE_DURATION))
 }
