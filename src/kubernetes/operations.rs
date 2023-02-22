@@ -11,11 +11,14 @@ use kube::{
     },
     Resource,
 };
+use serde_json::json;
 use thiserror::Error;
 use tokio::time::Duration;
 
-use crate::prometheus::alert::PromAlerts;
-use crate::service_alerts::{ServiceAlert, ServiceAlertStatus, API_GROUP, FINALIZER_NAME};
+use crate::service_alerts::{
+    ServiceAlert, ServiceAlertStatus, API_GROUP, API_VERSION, FINALIZER_NAME,
+};
+use crate::{prometheus::alert::PromAlerts, service_alerts::KIND};
 
 use super::reconciler::Context;
 
@@ -75,8 +78,8 @@ impl ServiceAlert {
 
         tracing::debug!("getting ServiceAlert patch status");
         let ps = PatchParams::apply(API_GROUP).force();
-        let _o = service_alert_api
-            .patch_status(&name, &ps, &self.generate_status_patch())
+        service_alert_api
+            .patch_status(&name, &ps, &Patch::Apply(self.generate_status_patch()))
             .await?;
 
         // If no events were received, check back every 5 minutes
@@ -109,16 +112,28 @@ impl ServiceAlert {
         Ok(Action::await_change())
     }
 
-    #[tracing::instrument]
-    pub fn generate_status_patch(&self) -> Patch<ServiceAlertStatus> {
+    #[tracing::instrument(skip_all)]
+    pub fn generate_status_patch(&self) -> serde_json::Value {
         tracing::debug!("building ServiceAlert status");
-        Patch::Apply(ServiceAlertStatus {
-            last_reconciled_at: Some(Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
-            reconciliation_expires_at: Some(
-                (Utc::now() + chrono::Duration::seconds(SUCCESSFUL_REQUEUE_DURATION as i64))
-                    .format("%Y-%m-%dT%H:%M:%S")
-                    .to_string(),
-            ),
+
+        // Ideally this could return a Patch::Apply<ServiceAlertStatus>, but
+        // there's an odd interaction with kube.rs here, where `apiVersion` is
+        // required and presumably generated from our struct, but not available
+        // here.
+        //
+        // This workaround is from their docs where you just use a JSON
+        // fragment.
+        json!({
+            "apiVersion": format!("{API_GROUP}/{API_VERSION}"),
+            "kind": KIND,
+            "status": ServiceAlertStatus{
+                last_reconciled_at: Some(Utc::now().format("%Y-%m-%dT%H:%M:%S").to_string()),
+                reconciliation_expires_at: Some(
+                    (Utc::now() + chrono::Duration::seconds(SUCCESSFUL_REQUEUE_DURATION as i64))
+                        .format("%Y-%m-%dT%H:%M:%S")
+                        .to_string()
+                ),
+            }
         })
     }
 }
