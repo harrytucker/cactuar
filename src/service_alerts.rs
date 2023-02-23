@@ -21,9 +21,17 @@ pub const FINALIZER_NAME: &str = "servicealert.cactuar.rs";
     namespaced
 )]
 pub struct ServiceAlertSpec {
-    pub common_labels: HashMap<String, String>,
+    pub common_labels: CommonLabels,
     pub deployment_name: String,
     pub alerts: HashMap<Alerts, Vec<AlertConfig>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq)]
+pub struct CommonLabels {
+    pub owner: String,
+    pub origin: String,
+    #[serde(flatten)]
+    pub extra: HashMap<String, String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
