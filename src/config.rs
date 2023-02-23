@@ -13,19 +13,19 @@
 //!
 //! ### Environment variables
 //!
+//! Note that the RUST_LOG environment variable is provided by
+//! [`tracing_subscriber::EnvFilter`] in the [`crate::logging`] module.
+//!
 //! ```bash
 //! HTTP_ADDRESS=127.0.0.1 \
 //! HTTP_PORT=80 \
-//! LOG_LEVEL=debug \
+//! RUST_LOG=info \
 //! cargo run --bin controller
 //! ```
 //!
 //! ### Config file: `cactuar.toml`
 //!
 //! ```toml
-//! [log]
-//! level = "info"
-//!
 //! [http]
 //! address = "0.0.0.0"
 //! port = 8080
@@ -49,36 +49,7 @@ use serde::Deserialize;
 /// [`Default`] if all your sub-types implement the trait, or provide your own
 /// implementation of it.
 pub struct CactuarConfig {
-    pub log: Log,
     pub http: HTTP,
-}
-
-#[derive(Default, Debug, Deserialize)]
-/// This struct contains a [`LogLevel`] enum in order to provide the serialised
-/// structure we expect.
-///
-/// It also provides the environment variable naming, i.e. Log { level }
-/// becomes: LOG_LEVEL
-pub struct Log {
-    pub level: LogLevel,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-/// Our own representation of logging levels to decouple from the
-/// [`tracing::Level`] representations.
-pub enum LogLevel {
-    Error,
-    Warn,
-    Info,
-    Debug,
-    Trace,
-}
-
-impl Default for LogLevel {
-    fn default() -> Self {
-        Self::Info
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -100,20 +71,6 @@ impl Default for HTTP {
         Self {
             address: [0, 0, 0, 0].into(),
             port: 8080,
-        }
-    }
-}
-
-// We want to be able to convert our `LogLevel` enum to their [`tracing::Level`]
-// representation, so we implement the [`From`] trait here.
-impl From<LogLevel> for tracing::Level {
-    fn from(level: LogLevel) -> Self {
-        match level {
-            LogLevel::Error => Self::ERROR,
-            LogLevel::Warn => Self::WARN,
-            LogLevel::Info => Self::INFO,
-            LogLevel::Debug => Self::DEBUG,
-            LogLevel::Trace => Self::TRACE,
         }
     }
 }

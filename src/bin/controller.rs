@@ -18,8 +18,8 @@ use cactuar::{
 async fn main() -> Result<()> {
     let config = CactuarConfig::new()?;
 
-    let subscriber = logging::new_subscriber(config.log.level)?;
-    logging::set_global_logger(subscriber)?;
+    let subscriber = logging::new_subscriber()?;
+    logging::install_observability(subscriber)?;
 
     // Start kubernetes controller
     let control_future = controller_future().await;
