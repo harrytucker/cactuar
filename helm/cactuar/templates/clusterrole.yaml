@@ -12,13 +12,14 @@ rules:
       - "create"
       - "get"
       - "list"
-      - "delete"
+      - "watch"
+      - "update"
       - "patch"
+      - "delete"
   - apiGroups: ["events.k8s.io"]
     resources: ["events"]
     verbs:
       - "create"
       - "get"
       - "list"
-      - "delete"
-      - "patch"
+      - "watch"

@@ -14,9 +14,9 @@ const RUNTIME_CONSOLE_FILTERS: &str = "runtime=trace";
 ///
 /// To set this as the global logger, as well as to receive events from the
 /// standard library log facade, call [`set_global_logger`].
-pub fn new_subscriber<L: Into<Level>>(log_level: L) -> Result<impl Subscriber + Send + Sync> {
-    let log_level = log_level.into();
-    let env_filter = EnvFilter::from(log_level.as_str())
+pub fn new_subscriber() -> Result<impl Subscriber + Send + Sync> {
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"))
         .add_directive(TOKIO_CONSOLE_FILTERS.parse()?)
         .add_directive(RUNTIME_CONSOLE_FILTERS.parse()?);
 
@@ -28,7 +28,10 @@ pub fn new_subscriber<L: Into<Level>>(log_level: L) -> Result<impl Subscriber + 
     // events by default in order avoid burying application logs in Tokio TRACE
     // events.
     let tokio_console = console_subscriber::spawn();
-    let tokio_filter = filter_fn(|metadata| metadata.level() != &Level::TRACE);
+    let tokio_filter = filter_fn(|metadata| {
+        metadata.level() != &Level::TRACE && metadata.target() != "tokio"
+            || metadata.level() != &Level::TRACE && metadata.target() != "runtime"
+    });
 
     // automatically switch between pretty and json log formats depending on the
     // compilation profile
@@ -60,7 +63,7 @@ pub fn new_subscriber<L: Into<Level>>(log_level: L) -> Result<impl Subscriber + 
 /// developer happiness.
 ///
 /// Calling this twice will result in a code panic.
-pub fn set_global_logger(subscriber: impl Subscriber + Send + Sync) -> Result<()> {
+pub fn install_observability(subscriber: impl Subscriber + Send + Sync) -> Result<()> {
     color_eyre::install()?;
     LogTracer::init()?;
     set_global_default(subscriber)?;
