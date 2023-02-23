@@ -72,14 +72,6 @@ pub struct ServiceAlertStatus {
     pub reconciliation_expires_at: Option<String>,
 }
 
-// impl TryFrom<ServiceAlertSpec> for alert::Alerts {
-//     type Error = String;
-
-//     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
-//         todo!()
-//     }
-// }
-
 #[cfg(test)]
 mod test {
     use pretty_assertions::assert_eq;
