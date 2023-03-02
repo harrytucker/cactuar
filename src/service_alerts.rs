@@ -52,6 +52,14 @@ pub struct CommonLabels {
     pub origin: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq)]
+pub struct CommonLabels {
+    pub owner: String,
+    pub origin: String,
+    #[serde(flatten)]
+    pub extra: HashMap<String, String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum HttpAlerts {
@@ -105,14 +113,6 @@ pub struct ServiceAlertStatus {
     pub last_reconciled_at: Option<String>,
     pub reconciliation_expires_at: Option<String>,
 }
-
-// impl TryFrom<ServiceAlertSpec> for alert::Alerts {
-//     type Error = String;
-
-//     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
-//         todo!()
-//     }
-// }
 
 #[cfg(test)]
 mod test {

@@ -47,6 +47,10 @@ prometheus = { version = "0.13.3", features = ["process"] }
 # configuration
 config = "0.13"
 
+# temporary until we figure out various alert details to map to queries and
+# provide a unique identifier
+nanoid = "0.4.0"
+
 [dependencies.uuid]
 version = "1.3.0"
 features = ["v4", "fast-rng", "macro-diagnostics"]
