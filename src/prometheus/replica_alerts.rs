@@ -40,7 +40,7 @@ pub fn replica_count_rules(alert_configs: &[AlertConfig], spec: &ServiceAlertSpe
 // gRPC + ErrorPercent uses the istio_request_messages_total istio standard metric
 //
 // Example query (all replicas down):
-// sum by (app_kubernetes_io_name) (up{app_kubernetes_io_name="software-catalog-grpc"}) == 0
+// sum by (app_kubernetes_io_name) (up{app_kubernetes_io_name="best-service-eu-grpc"}) == 0
 // struct PromQL {
 //     aggr: String,
 // }
