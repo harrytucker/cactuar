@@ -4,8 +4,8 @@ use color_eyre::{eyre::eyre, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    crd::{ReplicaAlert, ServiceAlertSpec},
     prometheus::replica_alerts::replica_count_rules,
-    service_alerts::{ReplicaAlert, ServiceAlertSpec},
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]

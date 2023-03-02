@@ -1,4 +1,4 @@
-use crate::service_alerts::{AlertConfig, Operation, ServiceAlertSpec};
+use crate::crd::{AlertConfig, Operation, ServiceAlertSpec};
 
 use super::alert::{
     AlertGroup, AlertRules, Annotations, Labels, PrometheusSeverity, PLACEHOLDER_VALUE,

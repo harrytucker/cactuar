@@ -5,7 +5,7 @@ metadata:
 spec:
   commonLabels:
     origin: cloud
-    owner: bar
+    owner: foo
   deploymentName: best-service-eu
   alerts:
     REST:

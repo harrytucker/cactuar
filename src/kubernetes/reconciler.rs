@@ -8,7 +8,7 @@ use kube::{
 use thiserror::Error;
 
 use super::operations::OperationError;
-use crate::service_alerts::{ServiceAlert, FINALIZER_NAME};
+use crate::crd::{ServiceAlert, FINALIZER_NAME};
 
 const FAIL_REQUEUE_DURATION: u64 = 10;
 
