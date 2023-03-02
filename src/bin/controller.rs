@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
         .name("K8s Controller")
         .spawn(control_future)?;
 
-    tracing::info!("Cactuar now controlling resources.");
+    tracing::info!("Cactuar now controlling resources");
 
     let serve_addr = config.http.serve_addr();
     let http_future = axum::Server::bind(&serve_addr).serve(router()?.into_make_service());
@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
         .name("HTTP Server")
         .spawn(http_future)?;
 
-    tracing::info!(%serve_addr, "Cactuar ready to serve requests.");
+    tracing::info!(%serve_addr, "Cactuar ready to serve requests");
 
     signal::ctrl_c().await?;
     Ok(())

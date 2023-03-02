@@ -108,6 +108,7 @@ impl ServiceAlert {
             })
             .await?;
 
+        tracing::info!("Deletion successful");
         Ok(Action::await_change())
     }
 
