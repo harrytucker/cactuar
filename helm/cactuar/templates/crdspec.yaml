@@ -22,35 +22,101 @@ spec:
           spec:
             properties:
               alerts:
-                additionalProperties:
-                  items:
-                    properties:
-                      alertWithLabels:
-                        additionalProperties:
-                          type: string
+                properties:
+                  REST:
+                    additionalProperties:
+                      items:
+                        properties:
+                          for:
+                            type: string
+                          operation:
+                            enum:
+                            - EqualTo
+                            - LessThan
+                            - MoreThan
+                            type: string
+                          value:
+                            format: float
+                            type: number
+                          withLabels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                        required:
+                        - for
+                        - operation
+                        - value
+                        - withLabels
                         type: object
-                      for:
-                        type: string
-                      operation:
-                        enum:
-                        - EqualTo
-                        - LessThan
-                        - MoreThan
-                        type: string
-                      value:
-                        format: float
-                        type: number
-                    required:
-                    - alertWithLabels
-                    - for
-                    - operation
-                    - value
+                      type: array
+                    nullable: true
                     type: object
-                  type: array
+                  gRPC:
+                    additionalProperties:
+                      items:
+                        properties:
+                          for:
+                            type: string
+                          operation:
+                            enum:
+                            - EqualTo
+                            - LessThan
+                            - MoreThan
+                            type: string
+                          value:
+                            format: float
+                            type: number
+                          withLabels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                        required:
+                        - for
+                        - operation
+                        - value
+                        - withLabels
+                        type: object
+                      type: array
+                    nullable: true
+                    type: object
+                  replica:
+                    additionalProperties:
+                      items:
+                        properties:
+                          for:
+                            type: string
+                          operation:
+                            enum:
+                            - EqualTo
+                            - LessThan
+                            - MoreThan
+                            type: string
+                          value:
+                            format: float
+                            type: number
+                          withLabels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                        required:
+                        - for
+                        - operation
+                        - value
+                        - withLabels
+                        type: object
+                      type: array
+                    nullable: true
+                    type: object
                 type: object
               commonLabels:
-                additionalProperties:
-                  type: string
+                properties:
+                  origin:
+                    type: string
+                  owner:
+                    type: string
+                required:
+                - origin
+                - owner
                 type: object
               deploymentName:
                 type: string

@@ -83,6 +83,7 @@ impl ServiceAlert {
             .await?;
 
         // If no events were received, check back every 5 minutes
+        tracing::info!("Reconciliation successful");
         Ok(Action::requeue(Duration::from_secs(
             SUCCESSFUL_REQUEUE_DURATION,
         )))

@@ -33,7 +33,7 @@ pub async fn reconcile(
     crd: Arc<ServiceAlert>,
     ctx: Arc<Context>,
 ) -> Result<Action, ReconcilerError> {
-    tracing::info!("Reconciling");
+    tracing::info!("Beginning reconciliation");
 
     let ns = crd
         .namespace()

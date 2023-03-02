@@ -4,8 +4,8 @@ use color_eyre::{eyre::eyre, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    prometheus::replica_alerts::produce_replica_alerts,
-    service_alerts::{Alerts, ServiceAlertSpec},
+    prometheus::replica_alerts::replica_count_rules,
+    service_alerts::{ReplicaAlert, ServiceAlertSpec},
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -77,21 +77,18 @@ pub const PLACEHOLDER_VALUE: &str = "PLACEHOLDER";
 impl TryFrom<ServiceAlertSpec> for PromAlerts {
     type Error = color_eyre::Report;
 
-    fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
-        todo!()
-        // use crate::prometheus::alert::*;
+    fn try_from(spec: ServiceAlertSpec) -> Result<Self, Self::Error> {
+        use crate::prometheus::alert::*;
 
-        // let mut alerts = PromAlerts {
-        //     groups: Vec::with_capacity(value.alerts.len()),
-        // };
+        let mut alerts = PromAlerts { groups: Vec::new() };
 
-        // if let Some(replica_alerts) = value.alerts.misc.unwrap().get(&crate::service_alerts::MiscAlerts::AllReplicasDown::ReplicaCount) {
-        //     alerts
-        //         .groups
-        //         .push(produce_replica_alerts(replica_alerts, &value));
-        // }
+        if let Some(replica_alerts) = &spec.alerts.replica {
+            replica_alerts.iter().for_each(|(key, val)| match key {
+                ReplicaAlert::Count => alerts.groups.push(replica_count_rules(val, &spec)),
+            });
+        }
 
-        // Ok(alerts)
+        Ok(alerts)
     }
 }
 

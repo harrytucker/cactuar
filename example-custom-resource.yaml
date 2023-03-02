@@ -8,7 +8,7 @@ spec:
     owner: bar
   deploymentName: best-service-eu
   alerts:
-    HTTP:
+    REST:
       latencyMillisecondsP99:
         - operation: MoreThan
           value: 20
