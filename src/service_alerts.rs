@@ -34,13 +34,10 @@ pub struct ServiceAlertSpec {
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 pub struct Alerts {
     #[serde(rename = "gRPC")]
-    pub grpc: Option<HashMap<HttpAlerts, Vec<HttpAlertConfig>>>,
+    pub grpc: Option<HashMap<NetworkAlert, Vec<AlertConfig>>>,
     #[serde(rename = "REST")]
-    pub rest: Option<HashMap<HttpAlerts, Vec<HttpAlertConfig>>>,
-    // TODO: Define what is needed for misc here. look into what alerts we can support first
-    // There's a problem that the alertConfig changes for potentially every different misc
-    // alert so we can't support the Vec<HttpAlertConfig> pattern like we do with gRPC and REST
-    pub misc: Option<HashMap<MiscAlerts, Vec<HttpAlertConfig>>>,
+    pub rest: Option<HashMap<NetworkAlert, Vec<AlertConfig>>>,
+    pub replica: Option<HashMap<ReplicaAlert, Vec<AlertConfig>>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq)]
@@ -53,7 +50,7 @@ pub struct CommonLabels {
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
-pub enum HttpAlerts {
+pub enum NetworkAlert {
     ErrorPercent,
     TrafficPerSecond,
     LatencyMillisecondsP50,
@@ -64,21 +61,22 @@ pub enum HttpAlerts {
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
-pub enum MiscAlerts {
-    AllReplicasDown,
-    LowReplicaCount,
-    PodsFrequentlyRestarting,
+pub enum ReplicaAlert {
+    Count,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct HttpAlertConfig {
+pub struct AlertConfig {
     pub operation: Operation,
     pub value: f32,
     #[serde(rename = "for")]
     pub for_: String, // want to be able to specify like 3m 4s
-    pub alert_with_labels: HashMap<String, String>,
+    pub with_labels: HashMap<String, String>,
 }
+
+// #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
+// pub struct ReplicaAlertConfig {}
 
 // Kubernetes enums start with an upper case letter
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]
@@ -156,9 +154,9 @@ alerts:
             deployment_name: String::from("best-service-eu"),
             alerts: HashMap::from([
                 (
-                    HttpAlerts::ReplicaCount,
+                    NetworkAlert::ReplicaCount,
                     vec![
-                        HttpAlertConfig {
+                        AlertConfig {
                             operation: Operation::LessThan,
                             value: 3 as f32,
                             for_: String::from("3m"),
@@ -167,7 +165,7 @@ alerts:
                                 String::from("warning"),
                             )]),
                         },
-                        HttpAlertConfig {
+                        AlertConfig {
                             operation: Operation::EqualTo,
                             value: 0 as f32,
                             for_: String::from("0m"),
@@ -179,9 +177,9 @@ alerts:
                     ],
                 ),
                 (
-                    HttpAlerts::LatencyMillisecondsP99,
+                    NetworkAlert::LatencyMillisecondsP99,
                     vec![
-                        HttpAlertConfig {
+                        AlertConfig {
                             operation: Operation::MoreThan,
                             value: 20 as f32,
                             for_: String::from("5m"),
@@ -190,7 +188,7 @@ alerts:
                                 String::from("warning"),
                             )]),
                         },
-                        HttpAlertConfig {
+                        AlertConfig {
                             operation: Operation::MoreThan,
                             value: 50 as f32,
                             for_: String::from("2m"),
@@ -202,8 +200,8 @@ alerts:
                     ],
                 ),
                 (
-                    HttpAlerts::LatencyMillisecondsP50,
-                    vec![HttpAlertConfig {
+                    NetworkAlert::LatencyMillisecondsP50,
+                    vec![AlertConfig {
                         operation: Operation::MoreThan,
                         value: 20 as f32,
                         for_: String::from("0m"),
