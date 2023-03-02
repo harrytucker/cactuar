@@ -78,19 +78,20 @@ impl TryFrom<ServiceAlertSpec> for PromAlerts {
     type Error = color_eyre::Report;
 
     fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
-        use crate::prometheus::alert::*;
+        todo!()
+        // use crate::prometheus::alert::*;
 
-        let mut alerts = PromAlerts {
-            groups: Vec::with_capacity(value.alerts.len()),
-        };
+        // let mut alerts = PromAlerts {
+        //     groups: Vec::with_capacity(value.alerts.len()),
+        // };
 
-        if let Some(replica_alerts) = value.alerts.get(&Alerts::ReplicaCount) {
-            alerts
-                .groups
-                .push(produce_replica_alerts(replica_alerts, &value));
-        }
+        // if let Some(replica_alerts) = value.alerts.misc.unwrap().get(&crate::service_alerts::MiscAlerts::AllReplicasDown::ReplicaCount) {
+        //     alerts
+        //         .groups
+        //         .push(produce_replica_alerts(replica_alerts, &value));
+        // }
 
-        Ok(alerts)
+        // Ok(alerts)
     }
 }
 

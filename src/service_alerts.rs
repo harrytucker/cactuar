@@ -34,22 +34,13 @@ pub struct ServiceAlertSpec {
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq)]
 pub struct Alerts {
     #[serde(rename = "gRPC")]
-    pub GRPC: Option<HashMap<HttpAlerts, Vec<HttpAlertConfig>>>,
+    pub grpc: Option<HashMap<HttpAlerts, Vec<HttpAlertConfig>>>,
     #[serde(rename = "REST")]
-    pub REST: Option<HashMap<HttpAlerts, Vec<HttpAlertConfig>>>,
+    pub rest: Option<HashMap<HttpAlerts, Vec<HttpAlertConfig>>>,
     // TODO: Define what is needed for misc here. look into what alerts we can support first
     // There's a problem that the alertConfig changes for potentially every different misc
     // alert so we can't support the Vec<HttpAlertConfig> pattern like we do with gRPC and REST
-    // pub Misc: Option<HashMap<MiscAlerts, $something>>,
-}
-
-// It would be cool if we could union this struct with a HashMap<String, String>
-// so that we can validate at deploy time the owner and origin fields but also allow
-// arbitrary fields
-#[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq)]
-pub struct CommonLabels {
-    pub owner: String,
-    pub origin: String,
+    pub misc: Option<HashMap<MiscAlerts, Vec<HttpAlertConfig>>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq)]
@@ -63,7 +54,6 @@ pub struct CommonLabels {
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum HttpAlerts {
-    ReplicaCount,
     ErrorPercent,
     TrafficPerSecond,
     LatencyMillisecondsP50,
