@@ -15,10 +15,8 @@ use serde_json::json;
 use thiserror::Error;
 use tokio::time::Duration;
 
-use crate::service_alerts::{
-    ServiceAlert, ServiceAlertStatus, API_GROUP, API_VERSION, FINALIZER_NAME,
-};
-use crate::{prometheus::alert::PromAlerts, service_alerts::KIND};
+use crate::crd::{ServiceAlert, ServiceAlertStatus, API_GROUP, API_VERSION, FINALIZER_NAME, KIND};
+use crate::prometheus::alert::PromAlerts;
 
 use super::reconciler::Context;
 
@@ -83,6 +81,7 @@ impl ServiceAlert {
             .await?;
 
         // If no events were received, check back every 5 minutes
+        tracing::info!("Reconciliation successful");
         Ok(Action::requeue(Duration::from_secs(
             SUCCESSFUL_REQUEUE_DURATION,
         )))

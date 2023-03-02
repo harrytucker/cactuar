@@ -3,7 +3,10 @@ use std::collections::{BTreeMap, HashMap};
 use color_eyre::{eyre::eyre, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::service_alerts::{Alerts, ServiceAlertSpec};
+use crate::{
+    crd::{ReplicaAlert, ServiceAlertSpec},
+    prometheus::replica_alerts::replica_count_rules,
+};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct PromAlerts {
@@ -69,41 +72,20 @@ impl TryFrom<PromAlerts> for BTreeMap<String, String> {
 
 /// FIXME: This should be replaced with a generated/converted when possible.
 /// Once this is marked as DEAD_CODE then we are good to go!
-const PLACEHOLDER_VALUE: &str = "PLACEHOLDER";
+pub const PLACEHOLDER_VALUE: &str = "PLACEHOLDER";
 
 impl TryFrom<ServiceAlertSpec> for PromAlerts {
     type Error = color_eyre::Report;
 
-    fn try_from(value: ServiceAlertSpec) -> Result<Self, Self::Error> {
+    fn try_from(spec: ServiceAlertSpec) -> Result<Self, Self::Error> {
         use crate::prometheus::alert::*;
 
-        let mut alerts = PromAlerts {
-            groups: Vec::with_capacity(value.alerts.len()),
-        };
+        let mut alerts = PromAlerts { groups: Vec::new() };
 
-        if let Some(replica_alerts) = value.alerts.get(&Alerts::ReplicaCount) {
-            let replica_rules = replica_alerts
-                .iter()
-                .map(|conf| AlertRules {
-                    alert: PLACEHOLDER_VALUE.into(),
-                    expr: PLACEHOLDER_VALUE.into(),
-                    for_: conf.for_.clone(),
-                    labels: Labels {
-                        severity: PrometheusSeverity::from(&conf.alert_with_labels),
-                        source: value.common_labels.get("origin").unwrap().into(),
-                        owner: value.common_labels.get("owner").unwrap().into(),
-                    },
-                    annotations: Annotations {
-                        summary: PLACEHOLDER_VALUE.into(),
-                        description: PLACEHOLDER_VALUE.into(),
-                    },
-                })
-                .collect();
-
-            alerts.groups.push(AlertGroup {
-                name: PLACEHOLDER_VALUE.into(),
-                rules: replica_rules,
-            })
+        if let Some(replica_alerts) = &spec.alerts.replica {
+            replica_alerts.iter().for_each(|(key, val)| match key {
+                ReplicaAlert::Count => alerts.groups.push(replica_count_rules(val, &spec)),
+            });
         }
 
         Ok(alerts)

@@ -5,34 +5,37 @@ metadata:
 spec:
   commonLabels:
     origin: cloud
-    owner: bar
+    owner: foo
   deploymentName: best-service-eu
   alerts:
-    replicaCount:
-      - operation: LessThan
-        value: 3
-        for: 3m
-        alertWithLabels:
-          severity: warning
-      - operation: EqualTo
-        value: 0
-        for: 0m
-        alertWithLabels:
-          severity: critical
-    latencyMillisecondsP99:
-      - operation: MoreThan
-        value: 20
-        for: 5m
-        alertWithLabels:
-          severity: warning
-      - operation: MoreThan
-        value: 50
-        for: 2m
-        alertWithLabels:
-          severity: critical
-    latencyMillisecondsP50:
-      - operation: MoreThan
-        value: 20
-        for: 0m
-        alertWithLabels:
-          severity: critical
+    REST:
+      latencyMillisecondsP99:
+        - operation: MoreThan
+          value: 20
+          for: 5m
+          withLabels:
+            severity: warning
+        - operation: MoreThan
+          value: 50
+          for: 2m
+          withLabels:
+            severity: critical
+    gRPC:
+      errorPercent:
+        - operation: MoreThan
+          value: 10 # %
+          for: 3m
+          withLabels:
+            severity: warning
+    replica:
+      count:
+        - operation: LessThan
+          value: 3
+          for: 5m
+          withLabels:
+            severity: warning
+        - operation: EqualTo
+          value: 0
+          for: 1m
+          withLabels:
+            severity: critical

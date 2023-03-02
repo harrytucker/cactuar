@@ -14,7 +14,7 @@ use kube::{
 
 use uuid::Uuid;
 
-use crate::service_alerts::{ServiceAlert, FINALIZER_NAME};
+use crate::crd::{ServiceAlert, FINALIZER_NAME};
 
 use super::reconciler::{self, Context};
 

@@ -53,6 +53,9 @@ pub mod config;
 /// Logic for monitoring and reconciling of Kubernetes resources.
 pub mod kubernetes;
 
+/// Cactuar's representation of service alerts and associated logic.
+pub mod crd;
+
 /// HTTP router and handlers for exposing readiness and Prometheus metrics.
 pub mod http;
 
@@ -63,6 +66,3 @@ pub mod logging;
 /// Types and logic for representing alerts in their native Prometheus format
 /// and structure.
 pub mod prometheus;
-
-/// Cactuar's representation of service alerts and associated logic.
-pub mod service_alerts;
