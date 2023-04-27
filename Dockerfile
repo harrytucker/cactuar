@@ -1,4 +1,4 @@
-FROM rust:1.67 AS chef
+FROM rust:1.69 AS chef
 
 # Use cargo-chef to cache Rust dependency builds for Docker, it's bad the
 # environment to spin your CPU that much on every Docker build!
