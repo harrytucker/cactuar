@@ -5,15 +5,22 @@
 # dependency version or install a new dependency, you may trigger a full
 # rebuild, which will take significantly longer than a cached build.
 docker_build(
-    "cactuar",
-    context=".",
+    "cactuar",   # image name
+    context=".", # build context
     dockerfile="./Dockerfile",
+    # Ignore Helm chart modifications to avoid unnecessary re-deploys
     ignore=["./helm/"]
 )
 
+# Installing kube-prometheus-stack can take longer than 30 seconds, there are
+# lots of container images to download!
 update_settings(k8s_upsert_timeout_secs = 180)
 
+# Load the Tilt extenstions for installing external Helm charts.
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
+
+# Add the prometheus-community Helm repo, and install kube-prometheus-stack,
+# which provides a bunch of components for observability.
 helm_repo('prometheus-community', 'https://prometheus-community.github.io/helm-charts')
 helm_resource('kube-prometheus-stack', 'prometheus-community/kube-prometheus-stack')
 
