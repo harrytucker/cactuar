@@ -11,8 +11,8 @@ tokio = { version = "1.25", features = ["full"] }
 futures = "*" # use the futures version pulled in by tokio
 
 # kubernetes dependencies
-kube = { version = "0.78", features = ["runtime", "derive", "client"] }
-k8s-openapi = { version = "0.17", features = ["v1_26"] }
+kube = { version = "0.82", features = ["runtime", "derive", "client"] }
+k8s-openapi = { version = "0.18", features = ["v1_26"] }
 
 # format utilities
 serde = "1"

@@ -6,6 +6,8 @@ rules:
   - apiGroups: ["cactuar.rs"]
     resources: ["*"]
     verbs: ["*"]
+  # TODO: Drop config map resource access once conversion to PrometheusRule CRD
+  # implemented
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs:
@@ -23,3 +25,13 @@ rules:
       - "get"
       - "list"
       - "watch"
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["prometheusrules"]
+    verbs:
+      - "create"
+      - "get"
+      - "list"
+      - "watch"
+      - "update"
+      - "patch"
+      - "delete"

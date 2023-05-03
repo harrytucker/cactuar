@@ -17,6 +17,8 @@ CACTUAR_DOCKER_TARGET = "cactuar"
 CACTUAR_HELM_CHART_NAME = "cactuar"
 CACTUAR_HELM_CHART_PATH = "./helm/cactuar"
 
+PROM_RULE_CRD_PATH = "https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/setup/0prometheusruleCustomResourceDefinition.yaml"
+
 [tasks.test]
 command = "cargo"
 args = [ "nextest", "run" ]
@@ -47,6 +49,20 @@ args = [
     "${CACTUAR_DOCKER_TARGET}",
     ".", # build context
 ]
+
+# Automation with the `-A` flag is not used here due to bug in `kopium` at time
+# of writing, where a JSON Schema cannot be derived as the `IntOrString` type
+# does not implement the necessary traits.
+#
+# This is fine, as this only limits us from applying the imported resource
+# definition to the cluster as a new resource, when this should already be
+# managed by `kube-prometheus-stack`, performing operations against the CRD,
+# such as creation, getting, or deletion will still work just fine.
+[tasks.import-crds]
+script = '''
+curl ${PROM_RULE_CRD_PATH} | \
+     kopium --docs -f - > ./src/crd/prom_rule.rs
+'''
 
 # Assumes you have Helm installed, see: https://helm.sh/docs/intro/install/
 #
