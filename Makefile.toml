@@ -15,7 +15,8 @@ skip_core_tasks = true
 [env]
 CACTUAR_DOCKER_TARGET = "cactuar"
 CACTUAR_HELM_CHART_NAME = "cactuar"
-CACTUAR_HELM_CHART_PATH = "./helm/cactuar"
+CACTUAR_HELM_CHART_PATH = "${CARGO_MAKE_WORKING_DIRECTORY}/helm/cactuar"
+K8S_MANIFESTS_OUT= "${CARGO_MAKE_WORKING_DIRECTORY}/manifests"
 
 PROM_RULE_CRD_PATH = "https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/setup/0prometheusruleCustomResourceDefinition.yaml"
 
@@ -64,12 +65,33 @@ curl ${PROM_RULE_CRD_PATH} | \
      kopium --docs -f - > ./src/crd/prom_rule.rs
 '''
 
+# Assumes you have both the Tanka and Jsonnette Bundler binaries installed, see
+# here: https://tanka.dev/install
+#
+# Installs dependencies for building the Kubernetes deployment with Grafana
+# Tanka.
+[tasks.tanka-deps]
+command = "jb"
+cwd = "tanka"
+args = ["install"]
+
+[tasks.tanka-export]
+command = "tk"
+cwd = "tanka"
+args = [
+     "export",
+     "${K8S_MANIFESTS_OUT}",
+     "./environments/default",
+     "--merge-strategy",
+     "replace-envs"
+]
+
 # Assumes you have Helm installed, see: https://helm.sh/docs/intro/install/
 #
 # This command just prints the Helm template output to stdout. If you want to
 # put the contents in a file to examine or search through it, redirect the
 # output to a file.
-[tasks.helm-preview]
+[tasks.helm-show]
 command = "helm"
 args = [
      "template",

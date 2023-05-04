@@ -1,0 +1,4 @@
+{
+    "apps-v1.Deployment-cactuar.yaml": "environments/default/main.jsonnet",
+    "rbac.authorization.k8s.io-v1.ClusterRole-cactuar.yaml": "environments/default/main.jsonnet"
+}

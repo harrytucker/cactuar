@@ -45,6 +45,11 @@ local k = import 'github.com/grafana/jsonnet-libs/ksonnet-util/kausal.libsonnet'
                    policyRule.withVerbs(['create', 'get', 'list', 'watch'])
                  ) +
                  clusterRole.withRulesMixin(
+                   policyRule.withApiGroups('' /* the core api group is the empty string: '' */) +
+                   policyRule.withResources('configmaps') +
+                   policyRule.withVerbs(['create', 'get', 'list', 'watch', 'update', 'patch', 'delete'])
+                 ) +
+                 clusterRole.withRulesMixin(
                    policyRule.withApiGroups('monitoring.coreos.com') +
                    policyRule.withResources('prometheusrules') +
                    policyRule.withVerbs(['create', 'get', 'list', 'watch', 'update', 'patch', 'delete'])
