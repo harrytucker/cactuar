@@ -6,6 +6,7 @@
   },
   "spec": {
     "namespace": "default",
+    "apiServer": "https://0.0.0.0:37697",
     "resourceDefaults": {},
     "expectVersions": {}
   }

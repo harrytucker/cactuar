@@ -6,9 +6,14 @@ local k = import 'github.com/grafana/jsonnet-libs/ksonnet-util/kausal.libsonnet'
   local container = k.core.v1.container,
   local port = k.core.v1.containerPort,
   local service = k.core.v1.service,
+  local servicePort = k.core.v1.servicePort,
+  local serviceAccount = k.core.v1.serviceAccount,
 
   local clusterRole = k.rbac.v1.clusterRole,
+  local clusterRoleBinding = k.rbac.v1.clusterRoleBinding,
   local policyRule = k.rbac.v1.policyRule,
+  local subject = k.rbac.v1.subject,
+
   local apiGroup = k.meta.v1.apiGroup,
   // defining the objects:
   cactuar: {
@@ -32,7 +37,17 @@ local k = import 'github.com/grafana/jsonnet-libs/ksonnet-util/kausal.libsonnet'
                     container.readinessProbe.httpGet.withPath('/ready') + container.readinessProbe.httpGet.withPort('http'),
                   ],
                 ) +
-                deploy.spec.template.metadata.withAnnotations($._config.cactuar.annotations),
+                deploy.spec.template.metadata.withAnnotations($._config.cactuar.annotations) +
+                deploy.spec.template.spec.withServiceAccountName($._config.cactuar.name),
+    service: service.new(
+      name=$._config.cactuar.name,
+      selector=$._config.cactuar.labels,
+      ports=servicePort.newNamed(
+        name=$._config.cactuar.ports.http.name,
+        port=$._config.cactuar.ports.http.port,
+        targetPort=$._config.cactuar.ports.http.name
+      ) + servicePort.withProtocol('TCP'),
+    ),
     clusterRole: clusterRole.new(name=$._config.cactuar.name) +
                  clusterRole.withRulesMixin(
                    policyRule.withApiGroups('cactuar.rs') +
@@ -45,7 +60,7 @@ local k = import 'github.com/grafana/jsonnet-libs/ksonnet-util/kausal.libsonnet'
                    policyRule.withVerbs(['create', 'get', 'list', 'watch'])
                  ) +
                  clusterRole.withRulesMixin(
-                   policyRule.withApiGroups('' /* the core api group is the empty string: '' */) +
+                   policyRule.withApiGroups(''/* the core api group is the empty string: '' */) +
                    policyRule.withResources('configmaps') +
                    policyRule.withVerbs(['create', 'get', 'list', 'watch', 'update', 'patch', 'delete'])
                  ) +
@@ -54,5 +69,15 @@ local k = import 'github.com/grafana/jsonnet-libs/ksonnet-util/kausal.libsonnet'
                    policyRule.withResources('prometheusrules') +
                    policyRule.withVerbs(['create', 'get', 'list', 'watch', 'update', 'patch', 'delete'])
                  ),
+    clusterRoleBinding: clusterRoleBinding.new(name=$._config.cactuar.name) +
+                        clusterRoleBinding.withSubjects(
+                          subject.fromServiceAccount(self.serviceAccount) +
+                          subject.withNamespace($._config.cactuar.namespace)
+                        ) +
+                        clusterRoleBinding.bindRole(self.clusterRole),
+    serviceAccount: serviceAccount.new($._config.cactuar.name) +
+                    serviceAccount.metadata.withNamespace($._config.cactuar.namespace),
+    local crdSpec = importstr 'crdspec.yaml',
+    crd: std.native('parseYaml')(crdSpec),
   },
 }

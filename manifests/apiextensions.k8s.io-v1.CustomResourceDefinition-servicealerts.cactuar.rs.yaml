@@ -1,0 +1,146 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servicealerts.cactuar.rs
+spec:
+  group: cactuar.rs
+  names:
+    categories: []
+    kind: ServiceAlert
+    plural: servicealerts
+    shortNames:
+    - alert
+    singular: servicealert
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns: []
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Auto-generated derived type for ServiceAlertSpec via `CustomResource`
+        properties:
+          spec:
+            properties:
+              alerts:
+                properties:
+                  REST:
+                    additionalProperties:
+                      items:
+                        properties:
+                          for:
+                            type: string
+                          operation:
+                            enum:
+                            - EqualTo
+                            - LessThan
+                            - MoreThan
+                            type: string
+                          value:
+                            format: float
+                            type: number
+                          withLabels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                        required:
+                        - for
+                        - operation
+                        - value
+                        - withLabels
+                        type: object
+                      type: array
+                    nullable: true
+                    type: object
+                  gRPC:
+                    additionalProperties:
+                      items:
+                        properties:
+                          for:
+                            type: string
+                          operation:
+                            enum:
+                            - EqualTo
+                            - LessThan
+                            - MoreThan
+                            type: string
+                          value:
+                            format: float
+                            type: number
+                          withLabels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                        required:
+                        - for
+                        - operation
+                        - value
+                        - withLabels
+                        type: object
+                      type: array
+                    nullable: true
+                    type: object
+                  replica:
+                    additionalProperties:
+                      items:
+                        properties:
+                          for:
+                            type: string
+                          operation:
+                            enum:
+                            - EqualTo
+                            - LessThan
+                            - MoreThan
+                            type: string
+                          value:
+                            format: float
+                            type: number
+                          withLabels:
+                            additionalProperties:
+                              type: string
+                            type: object
+                        required:
+                        - for
+                        - operation
+                        - value
+                        - withLabels
+                        type: object
+                      type: array
+                    nullable: true
+                    type: object
+                type: object
+              commonLabels:
+                properties:
+                  origin:
+                    type: string
+                  owner:
+                    type: string
+                required:
+                - origin
+                - owner
+                type: object
+              deploymentName:
+                type: string
+            required:
+            - alerts
+            - commonLabels
+            - deploymentName
+            type: object
+          status:
+            description: The status object of `StatusAlerter`
+            nullable: true
+            properties:
+              lastReconciledAt:
+                nullable: true
+                type: string
+              reconciliationExpiresAt:
+                nullable: true
+                type: string
+            type: object
+        required:
+        - spec
+        title: ServiceAlert
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
