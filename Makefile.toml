@@ -67,7 +67,9 @@ curl ${PROM_RULE_CRD_PATH} | \
 
 # Assumes you have both the Tanka and Jsonnette Bundler binaries installed, see
 # here: https://tanka.dev/install
-#
+[tasks.tanka]
+dependencies = ["tanka-deps", "tanka-export"]
+
 # Installs dependencies for building the Kubernetes deployment with Grafana
 # Tanka.
 [tasks.tanka-deps]
