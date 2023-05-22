@@ -24,7 +24,7 @@ spec:
         name: cactuar
     spec:
       containers:
-      - image: cactuar:latest
+      - image: registry.localhost:12345/cactuar:tilt-a86976fecee1ad34
         imagePullPolicy: IfNotPresent
         name: cactuar
         ports:
@@ -34,3 +34,4 @@ spec:
           httpGet:
             path: /ready
             port: http
+      serviceAccountName: cactuar
