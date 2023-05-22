@@ -2,9 +2,9 @@ local k = import 'github.com/grafana/jsonnet-libs/ksonnet-util/kausal.libsonnet'
 
 {
   local newPolicyRule(apiGroups, resources, verbs) = k.rbac.v1.policyRule.new() +
-                                              k.rbac.v1.policyRule.withApiGroups(apiGroups) +
-                                              k.rbac.v1.policyRule.withResources(resources) +
-                                              k.rbac.v1.policyRule.withVerbs(verbs),
+                                                     k.rbac.v1.policyRule.withApiGroups(apiGroups) +
+                                                     k.rbac.v1.policyRule.withResources(resources) +
+                                                     k.rbac.v1.policyRule.withVerbs(verbs),
 
   cactuar: newPolicyRule('cactuar.rs', '*', '*'),
 
