@@ -1,4 +1,4 @@
-FROM rust:1.69 AS chef
+FROM rust:1.72 AS chef
 
 # Use cargo-chef to cache Rust dependency builds for Docker, it's bad the
 # environment to spin your CPU that much on every Docker build!
@@ -17,7 +17,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release
 
-FROM gcr.io/distroless/cc AS cactuar
+FROM gcr.io/distroless/base-debian12 AS cactuar
 
 WORKDIR /app
 COPY cactuar.toml cactuar.toml
