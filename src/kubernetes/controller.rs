@@ -11,7 +11,7 @@ use kube::{
 
 use uuid::Uuid;
 
-use crate::crd::{PrometheusRule, ServiceAlert, FINALIZER_NAME};
+use crate::crd::{ServiceAlert, FINALIZER_NAME};
 
 use super::reconciler::{self, Context};
 
@@ -34,10 +34,10 @@ pub async fn controller_future() -> BoxFuture<'static, ()> {
 
     // FIXME: This is piece of testing code to make sure things are working,
     // remove later.
-    let prom_rule_api = Api::<PrometheusRule>::all(client.clone());
-    for rule in prom_rule_api.list(&ListParams::default()).await.unwrap() {
-        tracing::warn!(?rule, "FOUND RULE!")
-    }
+    // let prom_rule_api = Api::<PrometheusRule>::all(client.clone());
+    // for rule in prom_rule_api.list(&ListParams::default()).await.unwrap() {
+    //     tracing::warn!(?rule, "FOUND RULE!")
+    // }
     // -------------------------------------------------------------------------
 
     // If the CRD isn't installed, there isn't much our Controller can do.
