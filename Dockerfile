@@ -17,7 +17,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release
 
-FROM gcr.io/distroless/base-debian12 AS cactuar
+FROM gcr.io/distroless/cc-debian12 AS cactuar
 
 WORKDIR /app
 COPY cactuar.toml cactuar.toml
