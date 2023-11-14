@@ -10,10 +10,7 @@ pub fn grpc_alert_rules(
         .iter()
         .enumerate()
         .map(|(i, conf)| AlertRules {
-            alert: format!(
-                "{0} {1} {2}",
-                network_alert, conf.operation, conf.value
-            ),
+            alert: format!("{0} {1} {2}", network_alert, conf.operation, conf.value),
             expr: grpc_promql(network_alert, conf, spec),
             for_: conf.for_.clone(),
             labels: Labels {
