@@ -2,3 +2,5 @@
 
 # intellij editors
 .idea
+
+kubeconfig.yaml
