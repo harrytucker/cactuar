@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crd::{ReplicaAlert, ServiceAlertSpec},
-    prometheus::{http_alerts::http_rules, grpc_alerts::grpc_alert_rules, replica_alerts::replica_count_rules},
+    prometheus::{
+        grpc_alerts::grpc_alert_rules, http_alerts::http_rules, replica_alerts::replica_count_rules,
+    },
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
