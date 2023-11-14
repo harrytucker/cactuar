@@ -84,11 +84,11 @@ impl TryFrom<ServiceAlertSpec> for PromAlerts {
 
         if let Some(replica_alerts) = &spec.alerts.replica {
             replica_alerts.iter().for_each(|(key, val)| match key {
-                ReplicaAlert::Count => alerts.groups.push(replica_count_rules(&val, &spec)),
+                ReplicaAlert::Count => alerts.groups.push(replica_count_rules(val, &spec)),
             });
         }
 
-        if let Some(_) = &spec.alerts.rest {
+        if spec.alerts.rest.is_some() {
             alerts.groups.push(http_rules(&spec))
         }
 

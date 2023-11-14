@@ -7,21 +7,21 @@ pub fn http_rules(spec: &ServiceAlertSpec) -> AlertGroup {
 
     if let Some(rest_alerts) = &spec.alerts.rest {
         rest_alerts.iter().for_each(|(key, val)| match key {
-            NetworkAlert::ErrorPercent => rules.append(&mut error_percent_alerts(&spec, &val)),
+            NetworkAlert::ErrorPercent => rules.append(&mut error_percent_alerts(spec, val)),
             NetworkAlert::TrafficPerSecond => {
-                rules.append(&mut traffic_per_second_alerts(&spec, &val))
+                rules.append(&mut traffic_per_second_alerts(spec, val))
             }
             NetworkAlert::LatencyMillisecondsP50 => {
-                rules.append(&mut latency_percentile_alerts(&spec, 50, &val))
+                rules.append(&mut latency_percentile_alerts(spec, 50, val))
             }
             NetworkAlert::LatencyMillisecondsP90 => {
-                rules.append(&mut latency_percentile_alerts(&spec, 90, &val))
+                rules.append(&mut latency_percentile_alerts(spec, 90, val))
             }
             NetworkAlert::LatencyMillisecondsP95 => {
-                rules.append(&mut latency_percentile_alerts(&spec, 95, &val))
+                rules.append(&mut latency_percentile_alerts(spec, 95, val))
             }
             NetworkAlert::LatencyMillisecondsP99 => {
-                rules.append(&mut latency_percentile_alerts(&spec, 99, &val))
+                rules.append(&mut latency_percentile_alerts(spec, 99, val))
             }
         })
     }
