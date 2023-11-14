@@ -67,7 +67,7 @@ mod test {
         )?;
 
         registry.register(Box::new(counter.clone()))?;
-        let expected_metric_count = 5 as f64;
+        let expected_metric_count = 5_f64;
         counter.inc_by(expected_metric_count);
 
         let router = test_router(registry, counter);

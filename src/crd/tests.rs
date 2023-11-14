@@ -57,7 +57,7 @@ fn test_serialisation_happy_path() -> color_eyre::Result<()> {
                 NetworkAlert::ErrorPercent,
                 vec![AlertConfig {
                     operation: Operation::MoreThan,
-                    value: 10 as f32,
+                    value: 10_f32,
                     for_: String::from("3m"),
                     with_labels: HashMap::from([(
                         String::from("severity"),
@@ -70,7 +70,7 @@ fn test_serialisation_happy_path() -> color_eyre::Result<()> {
                 vec![
                     AlertConfig {
                         operation: Operation::MoreThan,
-                        value: 20 as f32,
+                        value: 20_f32,
                         for_: String::from("5m"),
                         with_labels: HashMap::from([(
                             String::from("severity"),
@@ -79,7 +79,7 @@ fn test_serialisation_happy_path() -> color_eyre::Result<()> {
                     },
                     AlertConfig {
                         operation: Operation::MoreThan,
-                        value: 50 as f32,
+                        value: 50_f32,
                         for_: String::from("2m"),
                         with_labels: HashMap::from([(
                             String::from("severity"),
@@ -93,7 +93,7 @@ fn test_serialisation_happy_path() -> color_eyre::Result<()> {
                 vec![
                     AlertConfig {
                         operation: Operation::LessThan,
-                        value: 3 as f32,
+                        value: 3_f32,
                         for_: String::from("5m"),
                         with_labels: HashMap::from([(
                             String::from("severity"),

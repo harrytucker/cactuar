@@ -4,8 +4,8 @@ use color_eyre::{eyre::eyre, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    crd::{NetworkAlert, ReplicaAlert, ServiceAlertSpec},
-    prometheus::{http_alerts::http_rules, grpc_alerts::grpc_alert_rules, replica_alerts::replica_count_rules},
+    crd::{ReplicaAlert, ServiceAlertSpec},
+    prometheus::{grpc_alerts::grpc_alert_rules, replica_alerts::replica_count_rules},
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -95,7 +95,7 @@ impl TryFrom<ServiceAlertSpec> for PromAlerts {
         if let Some(grpc_alerts) = &spec.alerts.grpc {
             grpc_alerts
                 .iter()
-                .for_each(|(key, val)| alerts.groups.push(grpc_alert_rules(key, &val, &spec)));
+                .for_each(|(key, val)| alerts.groups.push(grpc_alert_rules(key, val, &spec)));
         }
 
         Ok(alerts)
