@@ -2,3 +2,6 @@
 
 # intellij editors
 .idea
+
+# Grafana Tanka vendoring
+/tanka/vendor

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cactuar
+  namespace: default
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: cactuar
+      app.kubernetes.io/name: cactuar
+      name: cactuar
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+        prometheus.io/scrape: "true"
+      labels:
+        app.kubernetes.io/instance: cactuar
+        app.kubernetes.io/name: cactuar
+        name: cactuar
+    spec:
+      containers:
+      - image: registry.localhost:12345/cactuar:tilt-a86976fecee1ad34
+        imagePullPolicy: IfNotPresent
+        name: cactuar
+        ports:
+        - containerPort: 8080
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+      serviceAccountName: cactuar
