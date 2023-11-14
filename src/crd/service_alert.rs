@@ -59,6 +59,19 @@ pub enum NetworkAlert {
     LatencyMillisecondsP99,
 }
 
+impl Display for NetworkAlert {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NetworkAlert::ErrorPercent => write!(f, "Error %"),
+            NetworkAlert::TrafficPerSecond => write!(f, "Traffic /sec"),
+            NetworkAlert::LatencyMillisecondsP50 => write!(f, "Latency P50 (ms)"),
+            NetworkAlert::LatencyMillisecondsP90 => write!(f, "Latency P90 (ms)"),
+            NetworkAlert::LatencyMillisecondsP95 => write!(f, "Latency P95 (ms)"),
+            NetworkAlert::LatencyMillisecondsP99 => write!(f, "Latency P99 (ms)"),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, PartialEq, Eq, Hash)]
 #[serde(rename_all = "camelCase")]
 pub enum ReplicaAlert {

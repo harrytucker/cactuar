@@ -6,13 +6,13 @@ pub fn grpc_alert_rules(
     alert_configs: &[AlertConfig],
     spec: &ServiceAlertSpec,
 ) -> AlertGroup {
-    let replica_rules = alert_configs
+    let grpc_rules = alert_configs
         .iter()
         .enumerate()
         .map(|(i, conf)| AlertRules {
             alert: String::from(format!(
                 "{0} {1} {2}",
-                network_alert, alert_configs[i].operation, alert_configs[i].value
+                network_alert, conf.operation, conf.value
             )),
             expr: grpc_promql(network_alert, conf, spec),
             for_: conf.for_.clone(),
@@ -30,7 +30,7 @@ pub fn grpc_alert_rules(
 
     AlertGroup {
         name: String::from("gRPC Alerts"),
-        rules: replica_rules,
+        rules: grpc_rules,
     }
 }
 
@@ -39,8 +39,29 @@ fn grpc_promql(
     alert_config: &AlertConfig,
     spec: &ServiceAlertSpec,
 ) -> String {
-    let operation = &alert_config.operation;
-    format!(r#"foobar {operation} baz"#)
+    match network_alert {
+        NetworkAlert::ErrorPercent => {
+            todo!()
+        }
+        NetworkAlert::TrafficPerSecond => {
+            todo!()
+        }
+        NetworkAlert::LatencyMillisecondsP50 => {
+            todo!()
+        }
+        NetworkAlert::LatencyMillisecondsP90 => {
+            todo!()
+        }
+        NetworkAlert::LatencyMillisecondsP95 => {
+            todo!()
+        }
+        NetworkAlert::LatencyMillisecondsP99 => {
+            format!(
+                "histogram_quantile(0.99, istio_request_duration_milliseconds{}[{0}])",
+                alert_config.for_
+            )
+        }
+    }
 }
 
 fn grpc_summary(network_alert: &NetworkAlert, alert_config: &AlertConfig) -> String {
@@ -82,18 +103,3 @@ fn grpc_description(network_alert: &NetworkAlert, alert_config: &AlertConfig) ->
         NetworkAlert::LatencyMillisecondsP99 => String::from("this is a placeholder description"),
     }
 }
-
-// fn grpc_promql(network_alert: NetworkAlert, conf: AlertConfig) -> String {
-//
-// }
-
-// fn network_alert(network_alert: NetworkAlert) -> str {
-//     match network_alert {
-//         NetworkAlert::ErrorPercent => {}
-//         NetworkAlert::TrafficPerSecond => {}
-//         NetworkAlert::LatencyMillisecondsP50 => {}
-//         NetworkAlert::LatencyMillisecondsP90 => {}
-//         NetworkAlert::LatencyMillisecondsP95 => {}
-//         NetworkAlert::LatencyMillisecondsP99 => {}
-//     }
-// }
