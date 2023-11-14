@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crd::{ReplicaAlert, ServiceAlertSpec},
-    prometheus::replica_alerts::replica_count_rules,
+    prometheus::{http_alerts::http_rules, replica_alerts::replica_count_rules},
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -86,6 +86,10 @@ impl TryFrom<ServiceAlertSpec> for PromAlerts {
             replica_alerts.iter().for_each(|(key, val)| match key {
                 ReplicaAlert::Count => alerts.groups.push(replica_count_rules(val, &spec)),
             });
+        }
+
+        if spec.alerts.rest.is_some() {
+            alerts.groups.push(http_rules(&spec))
         }
 
         Ok(alerts)
