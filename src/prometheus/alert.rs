@@ -4,8 +4,8 @@ use color_eyre::{eyre::eyre, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    crd::{ReplicaAlert, ServiceAlertSpec},
-    prometheus::replica_alerts::replica_count_rules,
+    crd::{NetworkAlert, ReplicaAlert, ServiceAlertSpec},
+    prometheus::{http_alerts::http_alert_rules, replica_alerts::replica_count_rules},
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -84,8 +84,21 @@ impl TryFrom<ServiceAlertSpec> for PromAlerts {
 
         if let Some(replica_alerts) = &spec.alerts.replica {
             replica_alerts.iter().for_each(|(key, val)| match key {
-                ReplicaAlert::Count => alerts.groups.push(replica_count_rules(val, &spec)),
+                ReplicaAlert::Count => alerts.groups.push(replica_count_rules(&val, &spec)),
             });
+        }
+
+        if let Some(rest_alerts) = &spec.alerts.rest {
+            rest_alerts.iter().for_each(|(key, val)| match key {
+                NetworkAlert::ErrorPercent => println!("shut up"),
+                NetworkAlert::TrafficPerSecond => println!("shut up"),
+                NetworkAlert::LatencyMillisecondsP50 => println!("shut up"),
+                NetworkAlert::LatencyMillisecondsP90 => println!("shut up"),
+                NetworkAlert::LatencyMillisecondsP95 => println!("shut up"),
+                NetworkAlert::LatencyMillisecondsP99 => {
+                    alerts.groups.push(http_alert_rules(&val, &spec))
+                }
+            })
         }
 
         Ok(alerts)

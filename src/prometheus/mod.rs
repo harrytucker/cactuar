@@ -6,6 +6,7 @@
 //! Prometheus alert that Cactuar can produce as a Kubernetes `ConfigMap`.
 
 pub mod alert;
+pub mod http_alerts;
 pub mod replica_alerts;
 
 #[cfg(test)]
