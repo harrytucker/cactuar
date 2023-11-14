@@ -23,10 +23,45 @@ spec:
     gRPC:
       errorPercent:
         - operation: MoreThan
-          value: 10 # %
+          value: 10
           for: 3m
           withLabels:
             severity: warning
+      trafficPercent:
+        - operation: MoreThan
+          value: 1000
+          for: 1m
+          withLabels:
+            severity: warning
+      latencyMillisecondsP50:
+        - operation: MoreThan
+          value: 10
+          for: 2m
+          withLabels:
+            severity: warning
+      latencyMillisecondsP90:
+        - operation: MoreThan
+          value: 15
+          for: 2m
+          withLabels:
+            severity: warning
+      latencyMillisecondsP95:
+        - operation: MoreThan
+          value: 20
+          for: 2m
+          withLabels:
+            severity: warning
+      latencyMillisecondsP99:
+        - operation: MoreThan
+          value: 25
+          for: 5m
+          withLabels:
+            severity: warning
+        - operation: MoreThan
+          value: 50
+          for: 2m
+          withLabels:
+            severity: critical
     replica:
       count:
         - operation: LessThan
