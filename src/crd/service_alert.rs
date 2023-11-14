@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::hash::Hash;
+use std::{collections::HashMap, fmt::Display};
 
 use kube::CustomResource;
 use schemars::JsonSchema;
@@ -85,6 +85,16 @@ pub enum Operation {
     EqualTo,
     LessThan,
     MoreThan,
+}
+
+impl Display for Operation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Operation::EqualTo => write!(f, "=="),
+            Operation::LessThan => write!(f, "<"),
+            Operation::MoreThan => write!(f, ">"),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, JsonSchema, Eq, PartialEq, Hash)]

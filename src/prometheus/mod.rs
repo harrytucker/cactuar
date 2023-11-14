@@ -7,3 +7,6 @@
 
 pub mod alert;
 pub mod replica_alerts;
+
+#[cfg(test)]
+mod tests;

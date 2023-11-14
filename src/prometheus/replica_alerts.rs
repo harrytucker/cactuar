@@ -2,6 +2,9 @@ use crate::crd::{AlertConfig, Operation, ServiceAlertSpec};
 
 use super::alert::{AlertGroup, AlertRules, Annotations, Labels, PrometheusSeverity};
 
+/// Generates an [`AlertGroup`] for a list of defined replica alerts. Caller is
+/// responsible for only passing in a slice of alerts that are actually replica
+/// alerts!
 pub fn replica_count_rules(alert_configs: &[AlertConfig], spec: &ServiceAlertSpec) -> AlertGroup {
     // Prometheus Alert Rules in a single file must be uniquely named, but we
     // can't generate a *random* unique identifier, since that would break the
@@ -40,26 +43,28 @@ pub fn replica_count_rules(alert_configs: &[AlertConfig], spec: &ServiceAlertSpe
 //     aggr: String,
 // }
 
+/// Returns a [`String`] containing the PromQL expression for a given
+/// [`AlertConfig`] that alerts based on the number of pod replicas deployed.
+///
+/// Note that, as [AlertConfigs](AlertConfig) are agnostic to the type of alert,
+/// it is the caller's responsibility to *not* call this function on other alert
+/// types, like HTTP or gRPC alerts.
 fn replicas_promql(alert_config: &AlertConfig, spec: &ServiceAlertSpec) -> String {
-    match alert_config.operation {
-        Operation::EqualTo => {
-            format!(
-                r#"sum by (app_kubernetes_io_name) (up{{app_kubernetes_io_name="{0}"}}) == {1}"#,
-                spec.deployment_name, alert_config.value,
-            )
-        }
-        Operation::LessThan => format!(
-            r#"sum by (app_kubernetes_io_name) (up{{app_kubernetes_io_name="{0}"}}) < {1}"#,
-            spec.deployment_name, alert_config.value,
-        ),
-        Operation::MoreThan => format!(
-            r#"sum by (app_kubernetes_io_name) (up{{app_kubernetes_io_name="{0}"}}) > {1}"#,
-            spec.deployment_name, alert_config.value,
-        ),
-    }
+    let operation = &alert_config.operation;
+    format!(
+        r#"sum by (app_kubernetes_io_name) (up{{app_kubernetes_io_name="{0}"}}) {operation} {1}"#,
+        spec.deployment_name, alert_config.value,
+    )
 }
 
+/// Returns the [`Annotations`] struct for a given [`AlertConfig`].
 fn replicas_annotations(alert_config: &AlertConfig) -> Annotations {
+    // Alert annotations and labels for Prometheus can be templated, using two
+    // pairs of braces.
+    //
+    // Rust uses a single pair of braces for `format!()` macro templating, so
+    // you need to use an extra pair of braces for every literal brace you want
+    // in the string. This is why you see quadruple brace pairs in descriptions!
     match alert_config.operation {
         Operation::EqualTo => Annotations {
             summary: String::from("Replicas reached alert boundary"),
@@ -68,7 +73,6 @@ fn replicas_annotations(alert_config: &AlertConfig) -> Annotations {
         Operation::LessThan => Annotations {
             summary: String::from("Replicas less than alert boundary"),
             description: format!(
-                // quad-braces necessary for escaping within format! macro
                 "{{{{ $value }}}} replicas currently up, expected at least {0}",
                 alert_config.value
             ),
@@ -76,7 +80,6 @@ fn replicas_annotations(alert_config: &AlertConfig) -> Annotations {
         Operation::MoreThan => Annotations {
             summary: String::from("Replicas more than alert boundary"),
             description: format!(
-                // quad-braces necessary for escaping within format! macro
                 "{{{{ $value }}}} replicas currently up, expected less than {0}",
                 alert_config.value
             ),
