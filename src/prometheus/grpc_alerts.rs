@@ -44,9 +44,7 @@ fn grpc_promql(
                 alert_config.value
             )
         }
-        NetworkAlert::TrafficPerSecond => {
-            "this is a placeholder value.".to_string()
-        }
+        NetworkAlert::TrafficPerSecond => "this is a placeholder value.".to_string(),
         NetworkAlert::LatencyMillisecondsP50 => {
             format!(
                 "histogram_quantile(0.50, istio_request_duration_milliseconds{{destination_workload={0}}}[{1}]) {2} {3}",
