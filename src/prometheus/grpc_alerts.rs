@@ -45,7 +45,7 @@ fn grpc_promql(
             )
         }
         NetworkAlert::TrafficPerSecond => {
-            format!("this is a placeholder value.")
+            "this is a placeholder value.".to_string()
         }
         NetworkAlert::LatencyMillisecondsP50 => {
             format!(
