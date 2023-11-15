@@ -38,24 +38,47 @@ fn grpc_promql(
 ) -> String {
     match network_alert {
         NetworkAlert::ErrorPercent => {
-            todo!()
+            format!("(sum by (destination_workload) (rate(grpc_server_handled_total{{grpc_code=~\"Unknown|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded\", destination_workload=\"{0}\"}}[{1}]))/  sum by (destination_workload) (rate(grpc_server_started_total{{destination_workload=\"{0}\"}}[{1}])) * 100 > {2})",
+                _spec.deployment_name,
+                alert_config.for_,
+                alert_config.value
+            )
         }
-        NetworkAlert::TrafficPerSecond => {
-            todo!()
-        }
+        NetworkAlert::TrafficPerSecond => "this is a placeholder value.".to_string(),
         NetworkAlert::LatencyMillisecondsP50 => {
-            todo!()
+            format!(
+                "histogram_quantile(0.50, istio_request_duration_milliseconds{{destination_workload={0}}}[{1}]) {2} {3}",
+                _spec.deployment_name,
+                alert_config.for_,
+                alert_config.operation,
+                alert_config.value
+            )
         }
         NetworkAlert::LatencyMillisecondsP90 => {
-            todo!()
+            format!(
+                "histogram_quantile(0.90, istio_request_duration_milliseconds{{destination_workload={0}}}[{1}]) {2} {3}",
+                _spec.deployment_name,
+                alert_config.for_,
+                alert_config.operation,
+                alert_config.value
+            )
         }
         NetworkAlert::LatencyMillisecondsP95 => {
-            todo!()
+            format!(
+                "histogram_quantile(0.95, istio_request_duration_milliseconds{{destination_workload={0}}}[{1}]) {2} {3}",
+                _spec.deployment_name,
+                alert_config.for_,
+                alert_config.operation,
+                alert_config.value
+            )
         }
         NetworkAlert::LatencyMillisecondsP99 => {
             format!(
-                "histogram_quantile(0.99, istio_request_duration_milliseconds{}[{0}])",
-                alert_config.for_
+                "histogram_quantile(0.99, istio_request_duration_milliseconds{{destination_workload={0}}}[{1}]) {2} {3}",
+                _spec.deployment_name,
+                alert_config.for_,
+                alert_config.operation,
+                alert_config.value
             )
         }
     }
