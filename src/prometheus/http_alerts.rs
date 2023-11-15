@@ -78,7 +78,7 @@ fn error_percent_annotations(alert_config: &AlertConfig) -> Annotations {
 
 fn latency_percentile_alerts(
     spec: &ServiceAlertSpec,
-    percentile: i8,
+    _percentile: i8,
     alert_configs: &[AlertConfig],
 ) -> Vec<AlertRules> {
     alert_configs
@@ -86,7 +86,13 @@ fn latency_percentile_alerts(
         .enumerate()
         .map(|(i, conf)| AlertRules {
             alert: format!("HTTPLatencyPercentileRule-{0}-{1}", spec.deployment_name, i),
-            expr: format!(r#"latency percentile {} {}"#, conf.operation, percentile),
+            expr: format!(
+                "histogram_quantile({3}, istio_requests_total{{destination_workload={0}}}[{1}]) {2} {3}",
+                spec.deployment_name,
+                conf.for_,
+                conf.operation,
+                conf.value
+            ),
             for_: conf.for_.clone(),
             labels: Labels {
                 severity: PrometheusSeverity::from(&conf.with_labels),
